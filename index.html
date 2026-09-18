@@ -5,51 +5,56 @@
 <title>DirectChat Group | No Internet Needed</title>
 <link rel="stylesheet" href="style.css">
 <base target="_blank">
+<base target="_blank">
+    <link rel="icon" type="image/png+xml" href="./img/directchat-logo.png">
 </head>
 <body>
 
 <div class="card">
   <div id="s-home" class="step active">
+    <img src="./img/directchat-logo.png" alt="Net Less Logo" class="app-logo">
     <h1>⚡ Net Less</h1>
     <p class="sub">No Internet Required · Group Chat · Wi-Fi/Hotspot Only</p>
     <label class="label">Monkey Name</label>
     <input id="name" placeholder="e.g. Ahmed" maxlength="20">
-    <button class="btn-main" onclick="startHost()">🏠 Create Room (Become the Host)</button>
-    <button class="btn-ghost" onclick="show('s-join')">🔗 Join Room</button>
+    <button class="btn-main" onclick="startHost()">Create Room (Become the Host)</button>
+    <button class="btn-ghost" onclick="show('s-join')">Join Room</button>
   </div>
 
   <!-- HOST SIDE -->
   <div id="s-host" class="step">
-    <h1>🏠 Your Room</h1>
-    <p class="sub">Members: <span class="badge" id="memberCount">1</span> (You) · The host laptop needs to stay on</p>
+    <img src="./img/directchat-logo.png" alt="Net Less Logo" class="app-logo">
+    <h1>Your Room</h1>
+    <p class="sub">Members: <span class="badge" id="memberCount">1</span> (You) · The host needs to stay on</p>
     <div id="memberList"></div>
     <hr class="divider">
-    <button class="btn-add" onclick="genMemberCode()">➕ Add New member</button>
+    <button class="btn-add" onclick="genMemberCode()">Add New member</button>
     <div id="addArea" style="display:none">
       <label class="label">1. Send this code to the new member.</label>
       <textarea id="memberOffer" readonly></textarea>
       <div class="row">
-        <button class="btn-ghost" onclick="copyText('memberOffer')">📋 Copy</button>
+        <button class="btn-ghost" onclick="copyText('memberOffer')">Copy</button>
       </div>
       <label class="label">2. Paste their reply code here.</label>
       <textarea id="memberAnswer" placeholder="Reply Link to Member..."></textarea>
-      <button class="btn-main" onclick="acceptMember()">✅ Add Memeber</button>
+      <button class="btn-main" onclick="acceptMember()">Add Memeber</button>
     </div>
     <div id="hostStatus" class="status"></div>
     <hr class="divider">
-    <button class="btn-main" onclick="show('s-chat')">💬 Open Chat Box</button>
+    <button class="btn-main" onclick="show('s-chat')">💬</button>
     <button class="back" onclick="show('s-home')">← Back</button>
   </div>
 
   <!-- JOIN SIDE -->
   <div id="s-join" class="step">
-    <button class="back" onclick="show('s-home')">← Back</button>
+    <img src="./img/directchat-logo.png" alt="Net Less Logo" class="app-logo">
     <h1>Join the Room</h1>
     <p class="sub">Paste the code you received from the host here.</p>
     <label class="label">Connection Code</label>
     <textarea id="joinCode" placeholder="Host Link Paste Here..."></textarea>
     <button class="btn-main" onclick="joinRoom()">⚡ Connect</button>
     <div id="joinStatus" class="status"></div>
+    <button class="back" onclick="show('s-home')">← Back</button>
   </div>
 
   <div id="s-answer" class="step">
@@ -62,6 +67,7 @@
 
   <!-- CHAT -->
   <div id="s-chat" class="step">
+    <img src="./img/directchat-logo.png" alt="Net Less Logo" class="app-logo">
     <h1 id="chatTitle">💬 Group Chat</h1>
     <p class="sub">🔒 Direct connection · end-to-end encrypted</p>
     <div id="chatBox"></div>
