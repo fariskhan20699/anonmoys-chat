@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<title>DirectChat — No Internet Needed</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
+  body { min-height:100vh; background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+         display:flex; align-items:center; justify-content:center; padding:20px; color:#fff; }
+  .card { width:100%; max-width:480px; background:rgba(255,255,255,.08);
+          backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.15);
+          border-radius:20px; padding:28px; }
+  h1 { font-size:26px; text-align:center; margin-bottom:4px; }
+  .sub { text-align:center; color:#9fd8e8; font-size:13px; margin-bottom:20px; }
+  input, textarea { width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.2);
+          background:rgba(0,0,0,.3); color:#fff; font-size:14px; margin-bottom:12px; outline:none; }
+  input:focus, textarea:focus { border-color:#4dd0e1; }
+  textarea { min-height:80px; resize:vertical; font-size:11px; word-break:break-all; }
+  button { width:100%; padding:13px; border:none; border-radius:12px; font-size:15px; font-weight:600;
+           cursor:pointer; transition:.2s; margin-bottom:10px; }
+  .btn-main { background:linear-gradient(90deg,#00c9ff,#92fe9d); color:#06222b; }
+  .btn-main:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,201,255,.35); }
+  .btn-ghost { background:rgba(255,255,255,.12); color:#fff; }
+  .btn-ghost:hover { background:rgba(255,255,255,.22); }
+  .row { display:flex; gap:10px; }
+  .row button { margin-bottom:12px; }
+  .step { display:none; }
+  .step.active { display:block; animation:fade .3s; }
+  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1;} }
+  .label { font-size:12px; color:#9fd8e8; margin-bottom:6px; display:block; }
+  .status { text-align:center; padding:10px; border-radius:10px; font-size:13px; margin-bottom:12px; display:none; }
+  .ok { background:rgba(76,175,80,.2); color:#a5f0a8; display:block; }
+  .err { background:rgba(244,67,54,.2); color:#ffb3ae; display:block; }
+  #chatBox { height:260px; overflow-y:auto; background:rgba(0,0,0,.25); border-radius:12px;
+             padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
+  .msg { max-width:75%; padding:9px 13px; border-radius:14px; font-size:14px; line-height:1.4; word-break:break-word; }
+  .me { align-self:flex-end; background:linear-gradient(90deg,#00c9ff,#00a2ff); color:#03222b; border-bottom-right-radius:4px; }
+  .fr { align-self:flex-start; background:rgba(255,255,255,.14); border-bottom-left-radius:4px; }
+  .sys { align-self:center; font-size:11px; color:#9fd8e8; background:none; }
+  #typing { font-size:11px; color:#9fd8e8; height:16px; margin-bottom:4px; }
+  .back { background:none; border:none; color:#9fd8e8; font-size:12px; width:auto; padding:0; margin-bottom:14px; cursor:pointer; }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="card">
+  <div id="s-home" class="step active">
+    <h1>⚡ DirectChat</h1>
+    <p class="sub">Bina internet ke · Direct laptop-to-laptop · 100% private</p>
+    <label class="label">Aapka naam</label>
+    <input id="name" placeholder="e.g. Ahmed" maxlength="20">
+    <button class="btn-main" onclick="startCreate()">🔑 Create Connection (Code banayein)</button>
+    <button class="btn-ghost" onclick="show('s-join')">🔗 Join Connection (Code dalein)</button>
+  </div>
+
+  <div id="s-create" class="step">
+    <button class="back" onclick="show('s-home')">← Back</button>
+    <h1>Step 1 of 2</h1>
+    <p class="sub">Ye code dusre laptop ko dein (WhatsApp bhi chalega, sirf code bhejna hai)</p>
+    <label class="label">Aapka Connection Code — copy karke dost ko bhejein</label>
+    <textarea id="offerCode" readonly placeholder="Code ban raha hai..."></textarea>
+    <div class="row">
+      <button class="btn-ghost" onclick="copyText('offerCode')">📋 Copy</button>
+      <button class="btn-main" onclick="show('s-wait')">✅ Bhej diya, aage barhein</button>
+    </div>
+  </div>
+
+  <div id="s-wait" class="step">
+    <button class="back" onclick="show('s-create')">← Back</button>
+    <h1>Step 2 of 2</h1>
+    <p class="sub">Dost ne code banaya hoga — woh yahan paste karein</p>
+    <label class="label">Dost ka Reply Code</label>
+    <textarea id="answerCode" placeholder="Dost ka code yahan paste karein..."></textarea>
+    <button class="btn-main" onclick="acceptAnswer()">🚀 Connect karein</button>
+    <div id="waitStatus" class="status"></div>
+  </div>
+
+  <div id="s-join" class="step">
+    <button class="back" onclick="show('s-home')">← Back</button>
+    <h1>Join karein</h1>
+    <p class="sub">Dost ka Connection Code yahan paste karein</p>
+    <label class="label">Connection Code</label>
+    <textarea id="joinCode" placeholder="Dost ka code paste karein..."></textarea>
+    <button class="btn-main" onclick="joinConnection()">⚡ Connect karein</button>
+    <div id="joinStatus" class="status"></div>
+  </div>
+
+  <div id="s-answer" class="step">
+    <h1>Aapka Reply Code</h1>
+    <p class="sub">Ye code wapas dost ko bhejein — bas!</p>
+    <textarea id="myAnswer" readonly></textarea>
+    <div class="row">
+      <button class="btn-ghost" onclick="copyText('myAnswer')">📋 Copy</button>
+    </div>
+    <div id="connectedStatus" class="status ok" style="display:none">✅ Connected! Neeche chat shuru karein</div>
+  </div>
+
+  <div id="s-chat" class="step">
+    <h1 id="chatTitle">💬 Chat</h1>
+    <p class="sub">🔒 End-to-end encrypted · koi server nahi</p>
+    <div id="chatBox"></div>
+    <div id="typing"></div>
+    <div class="row">
+      <input id="msgInput" placeholder="Message likhein..." style="margin-bottom:0" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="btn-main" style="width:110px; margin-bottom:0" onclick="sendMsg()">Send ➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let pc, dc, myName = '', friendName = '';
+const $ = id => document.getElementById(id);
+
+function show(id){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function copyText(id){
+  $(id).select(); document.execCommand('copy');
+  if(navigator.clipboard) navigator.clipboard.writeText($(id).value);
+}
+function setStatus(el, msg, ok){
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+}
+function addMsg(text, who){
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  $('chatBox').appendChild(d);
+  $('chatBox').scrollTop = 999999;
+}
+function sysMsg(text){
+  const d = document.createElement('div');
+  d.className = 'msg sys'; d.textContent = text;
+  $('chatBox').appendChild(d);
+  $('chatBox').scrollTop = 999999;
+}
+
+function waitIce(peer){
+  return new Promise(res=>{
+    if(peer.iceGatheringState === 'complete') return res();
+    const t = setInterval(()=>{
+      if(peer.iceGatheringState === 'complete'){ clearInterval(t); res(); }
+    }, 200);
+    setTimeout(()=>{ clearInterval(t); res(); }, 5000);
+  });
+}
+function encode(desc){ return btoa(JSON.stringify(desc)); }
+function decode(code){ return JSON.parse(atob(code.trim())); }
+
+function setupChannel(channel){
+  dc = channel;
+  dc.onopen = ()=>{
+    show('s-chat');
+    sysMsg('✅ Connected! Ab aap chat kar sakte hain.');
+    dc.send(JSON.stringify({type:'hello', name: myName}));
+  };
+  dc.onmessage = e=>{
+    const data = JSON.parse(e.data);
+    if(data.type === 'hello'){ friendName = data.name; $('chatTitle').textContent = '💬 ' + (friendName||'Dost'); }
+    else if(data.type === 'typing'){ $('typing').textContent = friendName + ' typing...'; setTimeout(()=>$('typing').textContent='',1500); }
+    else if(data.type === 'msg') addMsg(data.text, 'fr');
+  };
+}
+
+async function startCreate(){
+  myName = $('name').value.trim() || 'Anonymous';
+  pc = new RTCPeerConnection({iceServers:[]});
+  setupChannel(pc.createDataChannel('chat'));
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await waitIce(pc);
+  $('offerCode').value = encode(pc.localDescription);
+  show('s-create');
+}
+
+async function joinConnection(){
+  try{
+    myName = $('name').value.trim() || 'Anonymous';
+    setStatus($('joinStatus'), '⏳ Connect ho raha hai...', true);
+    pc = new RTCPeerConnection({iceServers:[]});
+    pc.ondatachannel = e => setupChannel(e.channel);
+    await pc.setRemoteDescription(decode($('joinCode').value));
+    const ans = await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    await waitIce(pc);
+    $('myAnswer').value = encode(pc.localDescription);
+    $('joinStatus').className = 'status'; $('joinStatus').style.display = 'none';
+    show('s-answer');
+  }catch(err){ setStatus($('joinStatus'), '❌ Galat code! Dobara check karein.', false); }
+}
+
+async function acceptAnswer(){
+  try{
+    setStatus($('waitStatus'), '⏳ Connect ho raha hai...', true);
+    await pc.setRemoteDescription(decode($('answerCode').value));
+  }catch(err){ setStatus($('waitStatus'), '❌ Galat code! Dost se dobara lein.', false); }
+}
+
+let typingSent = false;
+$('msgInput')?.addEventListener('input', ()=>{
+  if(dc && dc.readyState === 'open' && !typingSent){
+    typingSent = true;
+    dc.send(JSON.stringify({type:'typing'}));
+    setTimeout(()=>typingSent=false, 2000);
+  }
+});
+
+function sendMsg(){
+  const t = $('msgInput').value.trim();
+  if(!t || !dc || dc.readyState !== 'open') return;
+  dc.send(JSON.stringify({type:'msg', text:t}));
+  addMsg(t, 'me');
+  $('msgInput').value = '';
+}
+</script>
+</body>
+</html>
