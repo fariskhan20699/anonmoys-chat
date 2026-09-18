@@ -15,6 +15,23 @@
         color: #fff;
     }
 
+    #bgVideo {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        object-fit: cover;
+        z-index: -2;           
+        }
+
+     body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(10, 25, 35, 0.75);   /* 0.75 = kitna dark, 0.5–0.85 try karo */
+        z-index: -1;
+        }
+
     .app-logo {
         width: 90px;
         height: 90px;
