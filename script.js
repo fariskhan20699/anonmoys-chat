@@ -1,288 +1,292 @@
 const $ = id => document.getElementById(id);
 const PREFIX = 'netless-';
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no 0/O/1/I confusion
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 let peer = null;
 let isHost = false;
 let myName = '';
 let roomCode = '';
 let myId = Math.random().toString(36).slice(2, 8);
-let hostConn = null;                 // guest -> host connection
-const guests = new Map();            // host: conn.peer -> {conn,name,id}
-const members = new Map();           // id -> name (everyone incl. me)
-let pendingRoom = null;              // room from ?room= link
-let roomPassword = '';               // host: current room password ('' = none)
-let awaitingPassword = false;        // guest: waiting on a password retry
 
-/* ---------- SCREENS ---------- */
+let hostConn = null;
+
+const guests = new Map();
+const members = new Map();
+
+let pendingRoom = null;
+let roomPassword = '';
+let awaitingPassword = false;
+
+
+/* =========================================================
+   SCREENS
+========================================================= */
+
 function show(id){
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  const s = $(id); if (s) s.classList.add('active');
-  if (id === 's-chat') setTimeout(() => $('msgInput').focus(), 150);
+
+  document.querySelectorAll('.step')
+    .forEach(s => s.classList.remove('active'));
+
+  const s = $(id);
+
+  if (s)
+    s.classList.add('active');
+
+  if (id === 's-chat'){
+    setTimeout(() => {
+      if ($('msgInput'))
+        $('msgInput').focus();
+    }, 150);
+  }
 }
+
+
+/* =========================================================
+   IMAGE VIEWER
+========================================================= */
 
 let imageZoom = 1;
 let imageRotation = 0;
 
 const instructionImages = [
-    "./img/01.png",
-    "./img/02.png",
-    "./img/03.png",
-    "./img/04.png",
-    "./img/05.png",
-    "./img/06.png",
-    "./img/07.png",
-    "./img/08.png",
-    "./img/09.png"
+  "./img/01.png",
+  "./img/02.png",
+  "./img/03.png",
+  "./img/04.png",
+  "./img/05.png",
+  "./img/06.png",
+  "./img/07.png",
+  "./img/08.png",
+  "./img/09.png"
 ];
 
 let currentImageIndex = 0;
-
 let mouseX = 50;
 let mouseY = 50;
 
 
-// =========================
-// OPEN IMAGE
-// =========================
+function openImage(src){
 
-function openImage(src) {
+  const modal = $('imageModal');
+  const image = $('previewImage');
 
-    const modal = $('imageModal');
-    const image = $('previewImage');
+  currentImageIndex =
+    instructionImages.indexOf(src);
 
-    currentImageIndex = instructionImages.indexOf(src);
+  if (currentImageIndex === -1)
+    currentImageIndex = 0;
 
-    if (currentImageIndex === -1) {
-        currentImageIndex = 0;
-    }
+  image.src =
+    instructionImages[currentImageIndex];
 
-    image.src = instructionImages[currentImageIndex];
+  imageZoom = 1;
+  imageRotation = 0;
 
-    imageZoom = 1;
-    imageRotation = 0;
+  mouseX = 50;
+  mouseY = 50;
 
-    mouseX = 50;
-    mouseY = 50;
+  image.style.transformOrigin =
+    "50% 50%";
 
-    image.style.transformOrigin = "50% 50%";
+  updateImageTransform();
 
-    updateImageTransform();
-
-    modal.classList.add('active');
+  modal.classList.add('active');
 }
 
 
-// =========================
-// CLOSE IMAGE
-// =========================
+function closeImage(){
 
-function closeImage() {
-    $('imageModal').classList.remove('active');
+  $('imageModal').classList.remove('active');
 }
 
 
-// =========================
-// MOUSE POSITION
-// =========================
+$('previewImage').addEventListener(
+  'mousemove',
+  function(e){
 
-$('previewImage').addEventListener('mousemove', function(e) {
+    const rect =
+      this.getBoundingClientRect();
 
-    const rect = this.getBoundingClientRect();
+    mouseX =
+      ((e.clientX - rect.left) / rect.width) * 100;
 
-    mouseX = ((e.clientX - rect.left) / rect.width) * 100;
-    mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+    mouseY =
+      ((e.clientY - rect.top) / rect.height) * 100;
 
     this.style.transformOrigin =
-        `${mouseX}% ${mouseY}%`;
-});
+      `${mouseX}% ${mouseY}%`;
+  }
+);
 
 
-// =========================
-// ZOOM IN
-// =========================
+function zoomIn(){
 
-function zoomIn() {
+  imageZoom += 0.2;
 
-    imageZoom += 0.2;
+  if (imageZoom > 3)
+    imageZoom = 3;
 
-    if (imageZoom > 3) {
-        imageZoom = 3;
-    }
-
-    updateImageTransform();
+  updateImageTransform();
 }
 
 
-// =========================
-// ZOOM OUT
-// =========================
+function zoomOut(){
 
-function zoomOut() {
+  imageZoom -= 0.2;
 
-    imageZoom -= 0.2;
+  if (imageZoom < 0.5)
+    imageZoom = 0.5;
 
-    if (imageZoom < 0.5) {
+  updateImageTransform();
+}
+
+
+function resetZoom(){
+
+  imageZoom = 1;
+  imageRotation = 0;
+
+  mouseX = 50;
+  mouseY = 50;
+
+  $('previewImage').style.transformOrigin =
+    "50% 50%";
+
+  updateImageTransform();
+}
+
+
+function rotateImage(){
+
+  imageRotation += 90;
+
+  if (imageRotation >= 360)
+    imageRotation = 0;
+
+  updateImageTransform();
+}
+
+
+function updateImageTransform(){
+
+  const image = $('previewImage');
+
+  image.style.transformOrigin =
+    `${mouseX}% ${mouseY}%`;
+
+  image.style.transform =
+    `scale(${imageZoom}) rotate(${imageRotation}deg)`;
+}
+
+
+function nextImage(){
+
+  currentImageIndex++;
+
+  if (
+    currentImageIndex >=
+    instructionImages.length
+  ){
+    currentImageIndex = 0;
+  }
+
+  const image = $('previewImage');
+
+  image.src =
+    instructionImages[currentImageIndex];
+
+  imageZoom = 1;
+  imageRotation = 0;
+
+  mouseX = 50;
+  mouseY = 50;
+
+  image.style.transformOrigin =
+    "50% 50%";
+
+  updateImageTransform();
+}
+
+
+function previousImage(){
+
+  currentImageIndex--;
+
+  if (currentImageIndex < 0){
+    currentImageIndex =
+      instructionImages.length - 1;
+  }
+
+  const image = $('previewImage');
+
+  image.src =
+    instructionImages[currentImageIndex];
+
+  imageZoom = 1;
+  imageRotation = 0;
+
+  mouseX = 50;
+  mouseY = 50;
+
+  image.style.transformOrigin =
+    "50% 50%";
+
+  updateImageTransform();
+}
+
+
+$('previewImage').addEventListener(
+  'wheel',
+  function(e){
+
+    e.preventDefault();
+
+    const rect =
+      this.getBoundingClientRect();
+
+    mouseX =
+      ((e.clientX - rect.left) / rect.width) * 100;
+
+    mouseY =
+      ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (e.deltaY < 0){
+
+      imageZoom += 0.2;
+
+      if (imageZoom > 3)
+        imageZoom = 3;
+
+    } else {
+
+      imageZoom -= 0.2;
+
+      if (imageZoom < 0.5)
         imageZoom = 0.5;
     }
 
     updateImageTransform();
-}
+  }
+);
 
 
-// =========================
-// RESET
-// =========================
-
-function resetZoom() {
-
-    imageZoom = 1;
-    imageRotation = 0;
-
-    mouseX = 50;
-    mouseY = 50;
-
-    $('previewImage').style.transformOrigin =
-        "50% 50%";
-
-    updateImageTransform();
-}
-
-
-// =========================
-// ROTATE
-// =========================
-
-function rotateImage() {
-
-    imageRotation += 90;
-
-    if (imageRotation >= 360) {
-        imageRotation = 0;
-    }
-
-    updateImageTransform();
-}
-
-
-// =========================
-// UPDATE IMAGE
-// =========================
-
-function updateImageTransform() {
-
-    const image = $('previewImage');
-
-    image.style.transformOrigin =
-        `${mouseX}% ${mouseY}%`;
-
-    image.style.transform =
-        `scale(${imageZoom}) rotate(${imageRotation}deg)`;
-}
-
-
-// =========================
-// NEXT IMAGE
-// =========================
-
-function nextImage() {
-
-    currentImageIndex++;
-
-    if (currentImageIndex >= instructionImages.length) {
-        currentImageIndex = 0;
-    }
-
-    const image = $('previewImage');
-
-    image.src = instructionImages[currentImageIndex];
-
-    imageZoom = 1;
-    imageRotation = 0;
-
-    mouseX = 50;
-    mouseY = 50;
-
-    image.style.transformOrigin = "50% 50%";
-
-    updateImageTransform();
-}
-
-
-// =========================
-// PREVIOUS IMAGE
-// =========================
-
-function previousImage() {
-
-    currentImageIndex--;
-
-    if (currentImageIndex < 0) {
-        currentImageIndex =
-            instructionImages.length - 1;
-    }
-
-    const image = $('previewImage');
-
-    image.src = instructionImages[currentImageIndex];
-
-    imageZoom = 1;
-    imageRotation = 0;
-
-    mouseX = 50;
-    mouseY = 50;
-
-    image.style.transformOrigin = "50% 50%";
-
-    updateImageTransform();
-}
-
-
-// =========================
-// MOUSE WHEEL ZOOM
-// =========================
-
-$('previewImage').addEventListener('wheel', function(e) {
-
-    e.preventDefault();
-
-    const rect = this.getBoundingClientRect();
-
-    mouseX =
-        ((e.clientX - rect.left) / rect.width) * 100;
-
-    mouseY =
-        ((e.clientY - rect.top) / rect.height) * 100;
-
-    if (e.deltaY < 0) {
-
-        imageZoom += 0.2;
-
-        if (imageZoom > 3) {
-            imageZoom = 3;
-        }
-
-    } else {
-
-        imageZoom -= 0.2;
-
-        if (imageZoom < 0.5) {
-            imageZoom = 0.5;
-        }
-    }
-
-    updateImageTransform();
-
-});
+/* =========================================================
+   HELP & SUPPORT
+========================================================= */
 
 function showHelp(type){
+
   const menu = $('helpMenu');
   const details = $('helpDetails');
+
   const help = {
 
     join: {
+
       title: 'How to join a room',
+
       icon: '⌗',
+
       content: `
         <p>1. Ask the host for the 9-character room code.</p>
         <p>2. Enter the code on the Join a room screen.</p>
@@ -292,8 +296,11 @@ function showHelp(type){
     },
 
     host: {
+
       title: 'How to host a room',
+
       icon: '＋',
+
       content: `
         <p>1. Select <b>Create a room</b>.</p>
         <p>2. Your room code and QR code will appear.</p>
@@ -304,8 +311,11 @@ function showHelp(type){
     },
 
     connection: {
+
       title: 'Connection problems',
+
       icon: '⌁',
+
       content: `
         <p>• Make sure everyone is connected to the same Wi-Fi or hotspot.</p>
         <p>• The host must keep the room open.</p>
@@ -315,8 +325,11 @@ function showHelp(type){
     },
 
     report: {
+
       title: 'Report a problem',
+
       icon: '!',
+
       content: `
         <p>Tell us what went wrong.</p>
 
@@ -345,22 +358,68 @@ function showHelp(type){
         <label class="help-label">Subject</label>
 
         <select id="problemSubject" class="help-select">
-          <option value="">Select a problem</option>
-          <option value="Can't create a room">Can't create a room</option>
-          <option value="Can't join a room">Can't join a room</option>
-          <option value="Room code not working">Room code not working</option>
-          <option value="QR code not working">QR code not working</option>
-          <option value="Connection problem">Connection problem</option>
-          <option value="Room password problem">Room password problem</option>
-          <option value="Messages not sending">Messages not sending</option>
-          <option value="Chat not updating">Chat not updating</option>
-          <option value="Emoji problem">Emoji problem</option>
-          <option value="Camera / QR scanner problem">Camera / QR scanner problem</option>
-          <option value="Page not loading">Page not loading</option>
-          <option value="Other">Other</option>
+
+          <option value="">
+            Select a problem
+          </option>
+
+          <option value="Can't create a room">
+            Can't create a room
+          </option>
+
+          <option value="Can't join a room">
+            Can't join a room
+          </option>
+
+          <option value="Room code not working">
+            Room code not working
+          </option>
+
+          <option value="QR code not working">
+            QR code not working
+          </option>
+
+          <option value="Connection problem">
+            Connection problem
+          </option>
+
+          <option value="Room password problem">
+            Room password problem
+          </option>
+
+          <option value="Messages not sending">
+            Messages not sending
+          </option>
+
+          <option value="Chat not updating">
+            Chat not updating
+          </option>
+
+          <option value="Emoji problem">
+            Emoji problem
+          </option>
+
+          <option value="Camera / QR scanner problem">
+            Camera / QR scanner problem
+          </option>
+
+          <option value="Page not loading">
+            Page not loading
+          </option>
+
+          <option value="File sharing problem">
+            File sharing problem
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
         </select>
 
-        <label class="help-label">Description</label>
+        <label class="help-label">
+          Description
+        </label>
 
         <textarea
           id="problemText"
@@ -370,670 +429,3792 @@ function showHelp(type){
           required
         ></textarea>
 
-        <button class="btn-main" onclick="submitProblem()">
+        <button
+          class="btn-main"
+          onclick="submitProblem()"
+        >
           Send Report
         </button>
 
         <p class="support-email">
           Need help? Contact us at
           <a href="mailto:netlesscodesupport@gmail.com">
-              netlesscodesupport@gmail.com
+            netlesscodesupport@gmail.com
           </a>
         </p>
       `
     }
 
   };
+
   const item = help[type];
-  if (!item) return;
+
+  if (!item)
+    return;
+
   menu.style.display = 'none';
+
   details.innerHTML = `
+
     <div class="help-title">
-      <span class="help-title-icon">${item.icon}</span>
-      <h1>${item.title}</h1>
+
+      <span class="help-title-icon">
+        ${item.icon}
+      </span>
+
+      <h1>
+        ${item.title}
+      </h1>
+
     </div>
 
     <div class="help-instructions">
       ${item.content}
     </div>
 
-    <button class="back" onclick="backToHelpMenu()">
+    <button
+      class="back"
+      onclick="backToHelpMenu()"
+    >
       ← Back to Help
     </button>
   `;
+
   details.style.display = 'block';
 }
-function backToHelpMenu(){
-  $('helpDetails').style.display = 'none';
-  $('helpDetails').innerHTML = '';
-  $('helpMenu').style.display = 'block';
 
+
+function backToHelpMenu(){
+
+  $('helpDetails').style.display =
+    'none';
+
+  $('helpDetails').innerHTML =
+    '';
+
+  $('helpMenu').style.display =
+    'block';
 }
+
+
 async function submitProblem(){
 
   const name = $('problemName');
   const email = $('problemEmail');
-  const subject = $('problemSubject').value;
-  const problem = $('problemText').value.trim();
+
+  const subject =
+    $('problemSubject').value;
+
+  const problem =
+    $('problemText').value.trim();
+
 
   if (!name.value.trim()){
-    toast('Please enter your name', 'err');
+
+    toast(
+      'Please enter your name',
+      'err'
+    );
+
     name.focus();
+
     return;
   }
+
 
   if (!email.value.trim()){
-    toast('Please enter your email', 'err');
+
+    toast(
+      'Please enter your email',
+      'err'
+    );
+
     email.focus();
+
     return;
   }
+
 
   if (!subject){
-    toast('Please select a problem', 'err');
+
+    toast(
+      'Please select a problem',
+      'err'
+    );
+
     $('problemSubject').focus();
+
     return;
   }
+
 
   if (!problem){
-    toast('Please describe the problem', 'err');
+
+    toast(
+      'Please describe the problem',
+      'err'
+    );
+
     $('problemText').focus();
+
     return;
   }
 
-  const formData = new FormData();
 
-  formData.append('access_key', 'b6d39fa0-0475-4726-a82d-e2191a7316fb');
-  formData.append('subject', 'Net Less | ' + subject);
-  formData.append('from_name', 'Net Less User');
-  formData.append('message', problem);
+  const formData =
+    new FormData();
+
+  formData.append(
+    'access_key',
+    'b6d39fa0-0475-4726-a82d-e2191a7316fb'
+  );
+
+  formData.append(
+    'subject',
+    'Net Less | ' + subject
+  );
+
+  formData.append(
+    'from_name',
+    'Net Less User'
+  );
+
+  formData.append(
+    'message',
+    problem
+  );
+
 
   try {
 
-    const response = await fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
-      body: formData
-    });
+    const response =
+      await fetch(
+        'https://api.web3forms.com/submit',
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
 
-    const data = await response.json();
+    const data =
+      await response.json();
+
 
     if (data.success){
 
-      toast('Report submitted successfully', 'ok');
+      toast(
+        'Report submitted successfully',
+        'ok'
+      );
 
-      $('problemSubject').value = '';
-      $('problemText').value = '';
+      $('problemSubject').value =
+        '';
+
+      $('problemText').value =
+        '';
 
     } else {
 
-      toast('Failed to submit report', 'err');
-
+      toast(
+        'Failed to submit report',
+        'err'
+      );
     }
 
-  } catch (error) {
+  } catch (error){
 
-    toast('Connection error. Try again.', 'err');
-
+    toast(
+      'Connection error. Try again.',
+      'err'
+    );
   }
 }
-/* ---------- TOAST ---------- */
-function toast(msg, kind = 'info'){
-  const t = document.createElement('div');
-  t.className = 'toast ' + kind;
-  t.textContent = msg;
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function toast(
+  msg,
+  kind = 'info'
+){
+
+  const t =
+    document.createElement('div');
+
+  t.className =
+    'toast ' + kind;
+
+  t.textContent =
+    msg;
+
   $('toasts').appendChild(t);
-  setTimeout(() => t.classList.add('out'), 2600);
-  setTimeout(() => t.remove(), 3000);
+
+  setTimeout(
+    () => t.classList.add('out'),
+    2600
+  );
+
+  setTimeout(
+    () => t.remove(),
+    3000
+  );
 }
 
-/* ---------- HELPERS ---------- */
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function makeCode(){
-  const b = crypto.getRandomValues(new Uint8Array(9));
-  return [...b].map(x => ALPHABET[x % ALPHABET.length]).join('');
+
+  const b =
+    crypto.getRandomValues(
+      new Uint8Array(9)
+    );
+
+  return [...b]
+    .map(
+      x =>
+        ALPHABET[
+          x % ALPHABET.length
+        ]
+    )
+    .join('');
 }
+
 
 function parseRoom(str){
-  if (!str) return null;
-  let s = String(str).trim();
-  try { const u = new URL(s); const r = u.searchParams.get('room'); if (r) s = r; } catch {}
-  s = s.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const m = s.match(/[A-Z0-9]{9}$/);
-  return m && [...m[0]].every(c => ALPHABET.includes(c)) ? m[0] : null;
+
+  if (!str)
+    return null;
+
+  let s =
+    String(str).trim();
+
+  try {
+
+    const u =
+      new URL(s);
+
+    const r =
+      u.searchParams.get('room');
+
+    if (r)
+      s = r;
+
+  } catch {}
+
+
+  s =
+    s
+      .toUpperCase()
+      .replace(
+        /[^A-Z0-9]/g,
+        ''
+      );
+
+
+  const m =
+    s.match(
+      /[A-Z0-9]{9}$/
+    );
+
+
+  return (
+    m &&
+    [...m[0]].every(
+      c => ALPHABET.includes(c)
+    )
+  )
+    ? m[0]
+    : null;
 }
+
 
 function roomLink(){
-  return location.href.split('#')[0].split('?')[0] + '?room=' + roomCode;
+
+  return (
+    location.href
+      .split('#')[0]
+      .split('?')[0]
+    + '?room='
+    + roomCode
+  );
 }
 
+
 function hue(name){
-  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
+
+  let h = 0;
+
+  for (const c of name){
+
+    h =
+      (
+        h * 31 +
+        c.charCodeAt(0)
+      ) % 360;
+  }
+
   return h;
 }
 
-function avatar(name, cls = ''){
-  const a = document.createElement('span');
-  a.className = 'avatar ' + cls;
-  a.style.setProperty('--h', hue(name));
-  a.textContent = (name.trim()[0] || '?').toUpperCase();
-  a.title = name;
+
+function avatar(
+  name,
+  cls = ''
+){
+
+  const a =
+    document.createElement('span');
+
+  a.className =
+    'avatar ' + cls;
+
+  a.style.setProperty(
+    '--h',
+    hue(name)
+  );
+
+  a.textContent =
+    (
+      name.trim()[0] ||
+      '?'
+    ).toUpperCase();
+
+  a.title =
+    name;
+
   return a;
 }
 
-const clip = (s, n) => String(s || '').slice(0, n);
-const timeNow = ts => new Date(ts || Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-function copyRaw(text, ok){
-  const done = () => toast(ok, 'ok');
-  if (navigator.clipboard && window.isSecureContext){
-    navigator.clipboard.writeText(text).then(done, fallback);
-  } else fallback();
+const clip =
+  (s, n) =>
+    String(s || '').slice(0, n);
+
+
+const timeNow =
+  ts =>
+    new Date(
+      ts || Date.now()
+    ).toLocaleTimeString(
+      [],
+      {
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+    );
+
+
+function copyRaw(
+  text,
+  ok
+){
+
+  const done =
+    () => toast(ok, 'ok');
+
+
+  if (
+    navigator.clipboard &&
+    window.isSecureContext
+  ){
+
+    navigator.clipboard
+      .writeText(text)
+      .then(done, fallback);
+
+  } else {
+
+    fallback();
+  }
+
+
   function fallback(){
-    const t = document.createElement('textarea');
-    t.value = text; document.body.appendChild(t); t.select();
-    try { document.execCommand('copy'); done(); } catch { toast('Could not copy', 'err'); }
+
+    const t =
+      document.createElement(
+        'textarea'
+      );
+
+    t.value =
+      text;
+
+    document.body.appendChild(t);
+
+    t.select();
+
+
+    try {
+
+      document.execCommand(
+        'copy'
+      );
+
+      done();
+
+    } catch {
+
+      toast(
+        'Could not copy',
+        'err'
+      );
+    }
+
+
     t.remove();
   }
 }
-const copyCode = () => copyRaw(roomCode, 'Room code copied');
-const copyLink = () => copyRaw(roomLink(), 'Join link copied');
 
-/* ---------- CHAT UI ---------- */
-function addMsg(text, who, senderName, ts){
-  const d = document.createElement('div');
-  d.className = 'msg ' + who;
-  if (who !== 'me' && senderName){
-    const w = document.createElement('div');
-    w.className = 'who'; w.style.setProperty('--h', hue(senderName));
-    w.textContent = senderName; d.appendChild(w);
+
+const copyCode =
+  () =>
+    copyRaw(
+      roomCode,
+      'Room code copied'
+    );
+
+
+const copyLink =
+  () =>
+    copyRaw(
+      roomLink(),
+      'Join link copied'
+    );
+
+
+/* =========================================================
+   CHAT UI
+========================================================= */
+
+function addMsg(
+  text,
+  who,
+  senderName,
+  ts
+){
+
+  const d =
+    document.createElement(
+      'div'
+    );
+
+  d.className =
+    'msg ' + who;
+
+
+  if (
+    who !== 'me' &&
+    senderName
+  ){
+
+    const w =
+      document.createElement(
+        'div'
+      );
+
+    w.className =
+      'who';
+
+    w.style.setProperty(
+      '--h',
+      hue(senderName)
+    );
+
+    w.textContent =
+      senderName;
+
+    d.appendChild(w);
   }
-  const t = document.createElement('div'); t.className = 'txt'; t.textContent = text; d.appendChild(t);
-  const m = document.createElement('div'); m.className = 'time'; m.textContent = timeNow(ts); d.appendChild(m);
+
+
+  const t =
+    document.createElement(
+      'div'
+    );
+
+  t.className =
+    'txt';
+
+  t.textContent =
+    text;
+
+  d.appendChild(t);
+
+
+  const m =
+    document.createElement(
+      'div'
+    );
+
+  m.className =
+    'time';
+
+  m.textContent =
+    timeNow(ts);
+
+  d.appendChild(m);
+
+
   $('chatBox').appendChild(d);
-  $('chatBox').scrollTop = 1e7;
+
+  $('chatBox').scrollTop =
+    1e7;
 }
+
 
 function sysMsg(text){
-  const d = document.createElement('div');
-  d.className = 'msg sys'; d.textContent = text;
+
+  const d =
+    document.createElement(
+      'div'
+    );
+
+  d.className =
+    'msg sys';
+
+  d.textContent =
+    text;
+
   $('chatBox').appendChild(d);
-  $('chatBox').scrollTop = 1e7;
+
+  $('chatBox').scrollTop =
+    1e7;
 }
+
+
+/* =========================================================
+   MEMBERS
+========================================================= */
 
 function renderMembers(){
-  const list = $('memberList'); list.innerHTML = '';
-  const stack = $('avatarStack'); stack.innerHTML = '';
-  [...members].forEach(([id, name], i) => {
-    const row = document.createElement('div'); row.className = 'member';
-    const left = document.createElement('span'); left.className = 'm-left';
-    left.appendChild(avatar(name));
-    const n = document.createElement('span');
-    n.textContent = name + (id === myId ? ' (You)' : (isHost ? '' : (i === 0 ? '' : '')));
-    left.appendChild(n); row.appendChild(left);
-    const st = document.createElement('span'); st.className = 'online'; st.textContent = 'online';
-    row.appendChild(st); list.appendChild(row);
-    if (i < 5) stack.appendChild(avatar(name, 'sm'));
-  });
-  const c = members.size;
-  $('memberCount').textContent = c;
-  $('waiting').style.display = (isHost && c === 1) ? 'flex' : 'none';
-  if (c > 5){ const more = document.createElement('span'); more.className = 'avatar sm more'; more.textContent = '+' + (c - 5); stack.appendChild(more); }
-}
 
-/* ---------- TYPING ---------- */
-let typingTimer = null, typingSentAt = 0;
-function showTyping(name){
-  $('typing').innerHTML = '';
-  const s = document.createElement('span'); s.textContent = name + ' is typing';
-  const dots = document.createElement('span'); dots.className = 'dots'; dots.innerHTML = '<i></i><i></i><i></i>';
-  $('typing').append(s, dots);
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => $('typing').innerHTML = '', 1800);
-}
+  const list =
+    $('memberList');
 
-/* ---------- NAME STEP ---------- */
-function goToRoomOptions(){
-  const input = $('name'), err = $('nameError'), name = input.value.trim();
-  if (!name){
-    input.classList.add('input-error'); err.style.display = 'block'; input.focus(); return;
+  list.innerHTML =
+    '';
+
+
+  const stack =
+    $('avatarStack');
+
+  stack.innerHTML =
+    '';
+
+
+  [...members].forEach(
+    ([id, name], i) => {
+
+      const row =
+        document.createElement(
+          'div'
+        );
+
+      row.className =
+        'member';
+
+
+      const left =
+        document.createElement(
+          'span'
+        );
+
+      left.className =
+        'm-left';
+
+
+      left.appendChild(
+        avatar(name)
+      );
+
+
+      const n =
+        document.createElement(
+          'span'
+        );
+
+      n.textContent =
+        name +
+        (
+          id === myId
+            ? ' (You)'
+            : ''
+        );
+
+
+      left.appendChild(n);
+
+      row.appendChild(left);
+
+
+      const st =
+        document.createElement(
+          'span'
+        );
+
+      st.className =
+        'online';
+
+      st.textContent =
+        'online';
+
+
+      row.appendChild(st);
+
+      list.appendChild(row);
+
+
+      if (i < 5){
+
+        stack.appendChild(
+          avatar(
+            name,
+            'sm'
+          )
+        );
+      }
+    }
+  );
+
+
+  const c =
+    members.size;
+
+
+  $('memberCount').textContent =
+    c;
+
+
+  $('waiting').style.display =
+    (
+      isHost &&
+      c === 1
+    )
+      ? 'flex'
+      : 'none';
+
+
+  if (c > 5){
+
+    const more =
+      document.createElement(
+        'span'
+      );
+
+    more.className =
+      'avatar sm more';
+
+    more.textContent =
+      '+' + (c - 5);
+
+    stack.appendChild(more);
   }
-  input.classList.remove('input-error'); err.style.display = 'none';
-  myName = name; $('userName').textContent = name;
-
-  if (pendingRoom){                       // opened via QR / link
-    $('joinCode').value = pendingRoom;
-    show('s-join'); joinRoom(); pendingRoom = null;
-  } else show('s-options');
 }
-$('name').addEventListener('input', function(){
-  if (this.value.trim()){ this.classList.remove('input-error'); $('nameError').style.display = 'none'; }
-});
-$('name').addEventListener('keydown', e => { if (e.key === 'Enter') goToRoomOptions(); });
 
-$('joinCode').addEventListener('input', function(){
-  const p = parseRoom(this.value);
-  if (p) this.value = p;
-  else if (!this.value.includes('/')) this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-});
-$('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
-$('joinPass').addEventListener('input', function(){
-  this.value = this.value.replace(/\D/g, '').slice(0, 4);
-});
-$('joinPass').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+
+/* =========================================================
+   TYPING
+========================================================= */
+
+let typingTimer = null;
+let typingSentAt = 0;
+
+
+function showTyping(name){
+
+  $('typing').innerHTML =
+    '';
+
+
+  const s =
+    document.createElement(
+      'span'
+    );
+
+  s.textContent =
+    name + ' is typing';
+
+
+  const dots =
+    document.createElement(
+      'span'
+    );
+
+  dots.className =
+    'dots';
+
+  dots.innerHTML =
+    '<i></i><i></i><i></i>';
+
+
+  $('typing').append(
+    s,
+    dots
+  );
+
+
+  clearTimeout(
+    typingTimer
+  );
+
+
+  typingTimer =
+    setTimeout(
+      () =>
+        $('typing').innerHTML = '',
+      1800
+    );
+}
+
+
+/* =========================================================
+   NAME STEP
+========================================================= */
+
+function goToRoomOptions(){
+
+  const input =
+    $('name');
+
+  const err =
+    $('nameError');
+
+  const name =
+    input.value.trim();
+
+
+  if (!name){
+
+    input.classList.add(
+      'input-error'
+    );
+
+    err.style.display =
+      'block';
+
+    input.focus();
+
+    return;
+  }
+
+
+  input.classList.remove(
+    'input-error'
+  );
+
+  err.style.display =
+    'none';
+
+
+  myName =
+    name;
+
+  $('userName').textContent =
+    name;
+
+
+  if (pendingRoom){
+
+    $('joinCode').value =
+      pendingRoom;
+
+    show('s-join');
+
+    joinRoom();
+
+    pendingRoom =
+      null;
+
+  } else {
+
+    show('s-options');
+  }
+}
+
+
+$('name').addEventListener(
+  'input',
+  function(){
+
+    if (this.value.trim()){
+
+      this.classList.remove(
+        'input-error'
+      );
+
+      $('nameError').style.display =
+        'none';
+    }
+  }
+);
+
+
+$('name').addEventListener(
+  'keydown',
+  e => {
+
+    if (e.key === 'Enter')
+      goToRoomOptions();
+  }
+);
+
+
+$('joinCode').addEventListener(
+  'input',
+  function(){
+
+    const p =
+      parseRoom(this.value);
+
+
+    if (p){
+
+      this.value =
+        p;
+
+    } else if (
+      !this.value.includes('/')
+    ){
+
+      this.value =
+        this.value
+          .toUpperCase()
+          .replace(
+            /[^A-Z0-9]/g,
+            ''
+          );
+    }
+  }
+);
+
+
+$('joinCode').addEventListener(
+  'keydown',
+  e => {
+
+    if (e.key === 'Enter')
+      joinRoom();
+  }
+);
+
+
+$('joinPass').addEventListener(
+  'input',
+  function(){
+
+    this.value =
+      this.value
+        .replace(/\D/g, '')
+        .slice(0, 4);
+  }
+);
+
+
+$('joinPass').addEventListener(
+  'keydown',
+  e => {
+
+    if (e.key === 'Enter')
+      joinRoom();
+  }
+);
+
 
 /* =========================================================
    HOST
 ========================================================= */
-function startHost(attempt = 0){
-  if (typeof Peer === 'undefined'){ toast('Could not load the connection library. Check your internet.', 'err'); return; }
+
+function startHost(
+  attempt = 0
+){
+
+  if (
+    typeof Peer === 'undefined'
+  ){
+
+    toast(
+      'Could not load the connection library. Check your internet.',
+      'err'
+    );
+
+    return;
+  }
+
+
   destroyPeer();
-  isHost = true;
-  roomCode = makeCode();
-  roomPassword = '';
-  members.clear(); members.set(myId, myName);
+
+
+  isHost =
+    true;
+
+  roomCode =
+    makeCode();
+
+  roomPassword =
+    '';
+
+
+  members.clear();
+
+  members.set(
+    myId,
+    myName
+  );
+
+
   guests.clear();
 
-  peer = new Peer(PREFIX + roomCode);
 
-  peer.on('open', () => {
-    $('roomChip').textContent = roomCode;
-    $('roomInfoBtn').style.display = '';
-    drawCode(); drawQR(); renderMembers();
-    $('passInput').value = '';
-    $('passHint').textContent = 'No password (optional). Set one for extra safety.';
-    $('chatBox').innerHTML = '';
-    sysMsg('Room ' + roomCode + ' created. Share the code to invite people.');
-    show('s-host');
-  });
+  peer =
+    new Peer(
+      PREFIX + roomCode
+    );
 
-  peer.on('connection', conn => {
-    const entry = { conn, name: '', id: '' };
-    conn.on('data', d => hostData(entry, d));
-    conn.on('close', () => hostDrop(entry));
-    conn.on('error', () => hostDrop(entry));
-  });
 
-  peer.on('error', err => {
-    if (err.type === 'unavailable-id' && attempt < 4) return startHost(attempt + 1);
-    if (!peer || !peer.open) toast('Could not create room. Check your internet and try again.', 'err');
-  });
-  peer.on('disconnected', () => { try { peer.reconnect(); } catch {} });
+  peer.on(
+    'open',
+    () => {
+
+      $('roomChip').textContent =
+        roomCode;
+
+      $('roomInfoBtn').style.display =
+        '';
+
+
+      drawCode();
+
+      drawQR();
+
+      renderMembers();
+
+
+      $('passInput').value =
+        '';
+
+
+      $('passHint').textContent =
+        'No password (optional). Set one for extra safety.';
+
+
+      $('chatBox').innerHTML =
+        '';
+
+
+      sysMsg(
+        'Room ' +
+        roomCode +
+        ' created. Share the code to invite people.'
+      );
+
+
+      show('s-host');
+    }
+  );
+
+
+  peer.on(
+    'connection',
+    conn => {
+
+      const entry = {
+        conn,
+        name: '',
+        id: ''
+      };
+
+
+      conn.on(
+        'data',
+        d =>
+          hostData(
+            entry,
+            d
+          )
+      );
+
+
+      conn.on(
+        'close',
+        () =>
+          hostDrop(entry)
+      );
+
+
+      conn.on(
+        'error',
+        () =>
+          hostDrop(entry)
+      );
+    }
+  );
+
+
+  peer.on(
+    'error',
+    err => {
+
+      if (
+        err.type ===
+        'unavailable-id' &&
+        attempt < 4
+      ){
+
+        return startHost(
+          attempt + 1
+        );
+      }
+
+
+      if (
+        !peer ||
+        !peer.open
+      ){
+
+        toast(
+          'Could not create room. Check your internet and try again.',
+          'err'
+        );
+      }
+    }
+  );
+
+
+  peer.on(
+    'disconnected',
+    () => {
+
+      try {
+        peer.reconnect();
+      } catch {}
+    }
+  );
 }
+
 
 function drawCode(){
-  const b = $('codeBoard'); b.innerHTML = '';
-  [...roomCode].forEach((ch, i) => {
-    const s = document.createElement('span');
-    s.className = 'ch'; s.textContent = ch; s.style.animationDelay = (i * 70) + 'ms';
-    b.appendChild(s);
-  });
+
+  const b =
+    $('codeBoard');
+
+  b.innerHTML =
+    '';
+
+
+  [...roomCode].forEach(
+    (ch, i) => {
+
+      const s =
+        document.createElement(
+          'span'
+        );
+
+      s.className =
+        'ch';
+
+      s.textContent =
+        ch;
+
+      s.style.animationDelay =
+        (i * 70) + 'ms';
+
+      b.appendChild(s);
+    }
+  );
 }
+
 
 function drawQR(){
-  const box = $('qr'); box.innerHTML = '';
-  new QRCode(box, { text: roomLink(), width: 168, height: 168, colorDark: '#06222b', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  $('qrHint').textContent = location.protocol === 'file:'
-    ? 'Tip: host this page on a web address so the QR opens on phones. Guests can still type the code.'
-    : 'Scan with any phone camera to join instantly.';
+
+  const box =
+    $('qr');
+
+  box.innerHTML =
+    '';
+
+
+  new QRCode(
+    box,
+    {
+      text: roomLink(),
+      width: 168,
+      height: 168,
+      colorDark: '#06222b',
+      colorLight: '#ffffff',
+      correctLevel:
+        QRCode.CorrectLevel.M
+    }
+  );
+
+
+  $('qrHint').textContent =
+    location.protocol === 'file:'
+      ? 'Tip: host this page on a web address so the QR opens on phones. Guests can still type the code.'
+      : 'Scan with any phone camera to join instantly.';
 }
 
-/* ---------- ROOM PASSWORD (host) ---------- */
+
+/* =========================================================
+   ROOM PASSWORD
+========================================================= */
+
 function setPassword(){
-  const v = $('passInput').value.trim();
+
+  const v =
+    $('passInput')
+      .value
+      .trim();
+
+
   if (!/^\d{4}$/.test(v)){
-    toast('Password must be exactly 4 digits', 'err');
+
+    toast(
+      'Password must be exactly 4 digits',
+      'err'
+    );
+
     return;
   }
-  roomPassword = v;
-  $('passInput').value = '';
-  $('passHint').textContent = 'Password protected — guests must enter this 4-digit code to join.';
-  toast('Room password set', 'ok');
+
+
+  roomPassword =
+    v;
+
+  $('passInput').value =
+    '';
+
+
+  $('passHint').textContent =
+    'Password protected — guests must enter this 4-digit code to join.';
+
+
+  toast(
+    'Room password set',
+    'ok'
+  );
 }
+
 
 function removePassword(){
+
   if (!roomPassword){
-    toast('No password is set', 'info');
+
+    toast(
+      'No password is set',
+      'info'
+    );
+
     return;
   }
-  roomPassword = '';
-  $('passInput').value = '';
-  $('passHint').textContent = 'No password (optional). Set one for extra safety.';
-  toast('Room password removed', 'ok');
+
+
+  roomPassword =
+    '';
+
+  $('passInput').value =
+    '';
+
+
+  $('passHint').textContent =
+    'No password (optional). Set one for extra safety.';
+
+
+  toast(
+    'Room password removed',
+    'ok'
+  );
 }
 
-function hostBroadcast(obj, except){
-  guests.forEach(g => { if (g !== except && g.id && g.conn.open) g.conn.send(obj); });
+
+/* =========================================================
+   HOST BROADCAST
+========================================================= */
+
+function hostBroadcast(
+  obj,
+  except
+){
+
+  guests.forEach(
+    g => {
+
+      if (
+        g !== except &&
+        g.id &&
+        g.conn.open
+      ){
+
+        try {
+          g.conn.send(obj);
+        } catch {}
+      }
+    }
+  );
 }
 
-function hostData(entry, d){
-  if (!d || typeof d !== 'object') return;
 
-  if (d.t === 'hello' && !entry.id){
-    if (roomPassword && clip(d.pass, 4) !== roomPassword){
-      try { entry.conn.send({ t: 'badpass' }); } catch {}
-      setTimeout(() => { try { entry.conn.close(); } catch {} }, 200);
+/* =========================================================
+   HOST DATA
+========================================================= */
+
+function hostData(
+  entry,
+  d
+){
+
+  if (
+    !d ||
+    typeof d !== 'object'
+  ){
+
+    return;
+  }
+
+
+  /*
+     HELLO
+  */
+
+  if (
+    d.t === 'hello' &&
+    !entry.id
+  ){
+
+    if (
+      roomPassword &&
+      clip(d.pass, 4) !==
+        roomPassword
+    ){
+
+      try {
+
+        entry.conn.send({
+          t: 'badpass'
+        });
+
+      } catch {}
+
+
+      setTimeout(
+        () => {
+
+          try {
+            entry.conn.close();
+          } catch {}
+
+        },
+        200
+      );
+
+
       return;
     }
 
-    entry.name = clip(d.name, 20).trim() || 'Guest';
-    let id = clip(d.id, 12) || Math.random().toString(36).slice(2, 8);
-    if (members.has(id)) id = Math.random().toString(36).slice(2, 8);
-    entry.id = id;
-    guests.set(entry.conn.peer, entry);
 
-    entry.conn.send({ t: 'welcome', code: roomCode, members: [...members] });
-    members.set(entry.id, entry.name);
-    hostBroadcast({ t: 'join', id: entry.id, name: entry.name }, entry);
-    sysMsg(entry.name + ' joined');
-    toast(entry.name + ' joined', 'ok');
+    entry.name =
+      clip(
+        d.name,
+        20
+      ).trim() ||
+      'Guest';
+
+
+    let id =
+      clip(
+        d.id,
+        12
+      ) ||
+      Math.random()
+        .toString(36)
+        .slice(2, 8);
+
+
+    if (
+      members.has(id)
+    ){
+
+      id =
+        Math.random()
+          .toString(36)
+          .slice(2, 8);
+    }
+
+
+    entry.id =
+      id;
+
+
+    guests.set(
+      entry.conn.peer,
+      entry
+    );
+
+
+    entry.conn.send({
+      t: 'welcome',
+      code: roomCode,
+      members: [...members]
+    });
+
+
+    members.set(
+      entry.id,
+      entry.name
+    );
+
+
+    hostBroadcast(
+      {
+        t: 'join',
+        id: entry.id,
+        name: entry.name
+      },
+      entry
+    );
+
+
+    sysMsg(
+      entry.name +
+      ' joined'
+    );
+
+
+    toast(
+      entry.name +
+      ' joined',
+      'ok'
+    );
+
+
     renderMembers();
+
     return;
   }
-  if (!entry.id) return;
+
+
+  if (!entry.id)
+    return;
+
+
+  /*
+     NORMAL MESSAGE
+  */
 
   if (d.t === 'msg'){
-    const m = { t: 'msg', id: entry.id, name: entry.name, text: clip(d.text, 1000), ts: Date.now() };
-    addMsg(m.text, 'fr', m.name, m.ts);
-    hostBroadcast(m, entry);
-  } else if (d.t === 'typing'){
-    showTyping(entry.name);
-    hostBroadcast({ t: 'typing', name: entry.name }, entry);
+
+    const m = {
+
+      t: 'msg',
+
+      id: entry.id,
+
+      name: entry.name,
+
+      text:
+        clip(
+          d.text,
+          1000
+        ),
+
+      ts:
+        Date.now()
+    };
+
+
+    addMsg(
+      m.text,
+      'fr',
+      m.name,
+      m.ts
+    );
+
+
+    hostBroadcast(
+      m,
+      entry
+    );
+  }
+
+
+  /*
+     TYPING
+  */
+
+  else if (
+    d.t === 'typing'
+  ){
+
+    showTyping(
+      entry.name
+    );
+
+
+    hostBroadcast(
+      {
+        t: 'typing',
+        name: entry.name
+      },
+      entry
+    );
+  }
+
+
+  /*
+     FILE
+  */
+
+  else if (
+    d.t === 'file-start' ||
+    d.t === 'file-chunk' ||
+    d.t === 'file-end'
+  ){
+
+    /*
+       Guest -> Host -> Other Guests
+    */
+
+    hostBroadcast(
+      d,
+      entry
+    );
   }
 }
 
-function hostDrop(entry){
-  if (entry.dropped) return; entry.dropped = true;
-  guests.delete(entry.conn.peer);
-  if (entry.id && members.has(entry.id)){
-    members.delete(entry.id);
-    hostBroadcast({ t: 'leave', id: entry.id, name: entry.name });
-    sysMsg(entry.name + ' left');
+
+/* =========================================================
+   HOST DROP
+========================================================= */
+
+function hostDrop(
+  entry
+){
+
+  if (entry.dropped)
+    return;
+
+
+  entry.dropped =
+    true;
+
+
+  guests.delete(
+    entry.conn.peer
+  );
+
+
+  if (
+    entry.id &&
+    members.has(entry.id)
+  ){
+
+    members.delete(
+      entry.id
+    );
+
+
+    hostBroadcast({
+      t: 'leave',
+      id: entry.id,
+      name: entry.name
+    });
+
+
+    sysMsg(
+      entry.name +
+      ' left'
+    );
+
+
     renderMembers();
   }
 }
 
+
 function closeRoom(){
-  if (!confirm('Close the room? Everyone will be disconnected.')) return;
+
+  if (
+    !confirm(
+      'Close the room? Everyone will be disconnected.'
+    )
+  ){
+
+    return;
+  }
+
+
   leaveRoom(true);
 }
+
 
 /* =========================================================
    GUEST
 ========================================================= */
+
 function setJoining(on){
-  $('joinBtn').classList.toggle('loading', on);
-  $('joinBtn').disabled = on;
+
+  $('joinBtn')
+    .classList
+    .toggle(
+      'loading',
+      on
+    );
+
+
+  $('joinBtn').disabled =
+    on;
 }
 
-function joinAction(){ joinRoom(); }
+
+function joinAction(){
+
+  joinRoom();
+}
+
 
 function joinRoom(){
-  const code = parseRoom($('joinCode').value);
-  const st = $('joinStatus');
-  if (!code){ setStatus(st, 'Enter a valid 9-character room code.', 'err'); return; }
-  if (typeof Peer === 'undefined'){ setStatus(st, 'Could not load the connection library. Check your internet.', 'err'); return; }
+
+  const code =
+    parseRoom(
+      $('joinCode').value
+    );
+
+
+  const st =
+    $('joinStatus');
+
+
+  if (!code){
+
+    setStatus(
+      st,
+      'Enter a valid 9-character room code.',
+      'err'
+    );
+
+    return;
+  }
+
+
+  if (
+    typeof Peer === 'undefined'
+  ){
+
+    setStatus(
+      st,
+      'Could not load the connection library. Check your internet.',
+      'err'
+    );
+
+    return;
+  }
+
 
   destroyPeer();
-  isHost = false; roomCode = code;
+
+
+  isHost =
+    false;
+
+  roomCode =
+    code;
+
+
   members.clear();
+
+
   setJoining(true);
-  setStatus(st, 'Looking for room ' + code + '…', 'info');
 
-  const passValue = $('joinPass').value.trim();
 
-  let settled = false;
-  const fail = msg => {
-    if (settled) return; settled = true;
-    setJoining(false); setStatus(st, msg, 'err'); destroyPeer();
-  };
-  const timeout = setTimeout(() => fail('Room not reachable. Make sure you are on the same Wi-Fi and the host is online.'), 15000);
+  setStatus(
+    st,
+    'Looking for room ' +
+      code +
+      '…',
+    'info'
+  );
 
-  peer = new Peer();
-  peer.on('error', err => {
-    clearTimeout(timeout);
-    fail(err.type === 'peer-unavailable' ? 'Room not found. Check the code and try again.' : 'Connection problem. Try again.');
-  });
 
-  peer.on('open', () => {
-    hostConn = peer.connect(PREFIX + code, { reliable: true });
+  const passValue =
+    $('joinPass')
+      .value
+      .trim();
 
-    hostConn.on('open', () => hostConn.send({ t: 'hello', name: myName, id: myId, pass: passValue }));
 
-    hostConn.on('data', d => {
-      if (!d || typeof d !== 'object') return;
-      if (d.t === 'badpass'){
-        clearTimeout(timeout);
-        settled = true;
-        awaitingPassword = true;
-        setJoining(false);
-        $('joinPass').style.display = 'block';
-        $('joinPass').focus();
-        setStatus(st, 'Wrong or missing password. Enter the room password and join again.', 'err');
+  let settled =
+    false;
+
+
+  const fail =
+    msg => {
+
+      if (settled)
         return;
-      }
-      if (d.t === 'welcome'){
-        clearTimeout(timeout); settled = true; setJoining(false);
-        d.members.forEach(([id, name]) => members.set(id, name));
-        members.set(myId, myName);
-        $('roomChip').textContent = roomCode;
-        $('roomInfoBtn').style.display = 'none';
-        $('chatBox').innerHTML = '';
-        sysMsg('Connected to room ' + roomCode);
-        renderMembers(); $('joinStatus').className = 'status'; show('s-chat');
-      }
-      else if (d.t === 'join'){ members.set(d.id, d.name); sysMsg(d.name + ' joined'); renderMembers(); }
-      else if (d.t === 'leave'){ members.delete(d.id); sysMsg(d.name + ' left'); renderMembers(); }
-      else if (d.t === 'msg'){ addMsg(clip(d.text, 1000), 'fr', d.name, d.ts); }
-      else if (d.t === 'typing'){ showTyping(d.name); }
-    });
 
-    hostConn.on('close', () => {
-      if (awaitingPassword){ awaitingPassword = false; destroyPeer(); return; }
-      if (!settled) return fail('The host closed the room.');
-      toast('The host closed the room', 'err');
-      leaveRoom(true);
-    });
-  });
+
+      settled =
+        true;
+
+
+      setJoining(false);
+
+
+      setStatus(
+        st,
+        msg,
+        'err'
+      );
+
+
+      destroyPeer();
+    };
+
+
+  const timeout =
+    setTimeout(
+      () =>
+        fail(
+          'Room not reachable. Make sure you are on the same Wi-Fi and the host is online.'
+        ),
+      15000
+    );
+
+
+  peer =
+    new Peer();
+
+
+  peer.on(
+    'error',
+    err => {
+
+      clearTimeout(
+        timeout
+      );
+
+
+      fail(
+        err.type ===
+        'peer-unavailable'
+
+          ? 'Room not found. Check the code and try again.'
+
+          : 'Connection problem. Try again.'
+      );
+    }
+  );
+
+
+  peer.on(
+    'open',
+    () => {
+
+      hostConn =
+        peer.connect(
+          PREFIX + code,
+          {
+            reliable: true
+          }
+        );
+
+
+      hostConn.on(
+        'open',
+        () => {
+
+          hostConn.send({
+            t: 'hello',
+            name: myName,
+            id: myId,
+            pass: passValue
+          });
+        }
+      );
+
+
+      hostConn.on(
+        'data',
+        d => {
+
+          if (
+            !d ||
+            typeof d !== 'object'
+          ){
+
+            return;
+          }
+
+
+          /*
+             BAD PASSWORD
+          */
+
+          if (
+            d.t === 'badpass'
+          ){
+
+            clearTimeout(
+              timeout
+            );
+
+
+            settled =
+              true;
+
+            awaitingPassword =
+              true;
+
+
+            setJoining(false);
+
+
+            $('joinPass')
+              .style
+              .display =
+              'block';
+
+
+            $('joinPass')
+              .focus();
+
+
+            setStatus(
+              st,
+              'Wrong or missing password. Enter the room password and join again.',
+              'err'
+            );
+
+
+            return;
+          }
+
+
+          /*
+             WELCOME
+          */
+
+          if (
+            d.t === 'welcome'
+          ){
+
+            clearTimeout(
+              timeout
+            );
+
+
+            settled =
+              true;
+
+
+            setJoining(false);
+
+
+            d.members.forEach(
+              ([id, name]) =>
+                members.set(
+                  id,
+                  name
+                )
+            );
+
+
+            members.set(
+              myId,
+              myName
+            );
+
+
+            $('roomChip').textContent =
+              roomCode;
+
+
+            $('roomInfoBtn')
+              .style
+              .display =
+              'none';
+
+
+            $('chatBox').innerHTML =
+              '';
+
+
+            sysMsg(
+              'Connected to room ' +
+              roomCode
+            );
+
+
+            renderMembers();
+
+
+            $('joinStatus')
+              .className =
+              'status';
+
+
+            show('s-chat');
+          }
+
+
+          /*
+             JOIN
+          */
+
+          else if (
+            d.t === 'join'
+          ){
+
+            members.set(
+              d.id,
+              d.name
+            );
+
+
+            sysMsg(
+              d.name +
+              ' joined'
+            );
+
+
+            renderMembers();
+          }
+
+
+          /*
+             LEAVE
+          */
+
+          else if (
+            d.t === 'leave'
+          ){
+
+            members.delete(
+              d.id
+            );
+
+
+            sysMsg(
+              d.name +
+              ' left'
+            );
+
+
+            renderMembers();
+          }
+
+
+          /*
+             MESSAGE
+          */
+
+          else if (
+            d.t === 'msg'
+          ){
+
+            addMsg(
+              clip(
+                d.text,
+                1000
+              ),
+              'fr',
+              d.name,
+              d.ts
+            );
+          }
+
+
+          /*
+             TYPING
+          */
+
+          else if (
+            d.t === 'typing'
+          ){
+
+            showTyping(
+              d.name
+            );
+          }
+
+
+          /*
+             FILE START
+          */
+
+          else if (
+            d.t === 'file-start'
+          ){
+
+            receiveFileStart(
+              d
+            );
+          }
+
+
+          /*
+             FILE CHUNK
+          */
+
+          else if (
+            d.t === 'file-chunk'
+          ){
+
+            receiveFileChunk(
+              d
+            );
+          }
+
+
+          /*
+             FILE END
+          */
+
+          else if (
+            d.t === 'file-end'
+          ){
+
+            receiveFileEnd(
+              d
+            );
+          }
+
+        }
+      );
+
+
+      hostConn.on(
+        'close',
+        () => {
+
+          if (
+            awaitingPassword
+          ){
+
+            awaitingPassword =
+              false;
+
+            destroyPeer();
+
+            return;
+          }
+
+
+          if (!settled)
+            return fail(
+              'The host closed the room.'
+            );
+
+
+          toast(
+            'The host closed the room',
+            'err'
+          );
+
+
+          leaveRoom(true);
+        }
+      );
+    }
+  );
 }
 
-function setStatus(el, msg, cls){ el.className = 'status ' + cls; el.textContent = msg; }
+
+function setStatus(
+  el,
+  msg,
+  cls
+){
+
+  el.className =
+    'status ' + cls;
+
+  el.textContent =
+    msg;
+}
+
 
 /* =========================================================
-   SEND
+   FILE SHARING
 ========================================================= */
-function sendMsg(){
-  const t = $('msgInput').value.trim();
-  if (!t) return;
-  const m = { t: 'msg', id: myId, name: myName, text: t, ts: Date.now() };
 
-  if (isHost){
-    if (guests.size === 0) toast('No one has joined yet. Share the room code.', 'info');
-    hostBroadcast(m);
-  } else if (hostConn && hostConn.open){
-    hostConn.send(m);
-  } else { toast('Not connected', 'err'); return; }
+const MAX_FILE_SIZE =
+  10 * 1024 * 1024;
 
-  addMsg(t, 'me', '', m.ts);
-  $('msgInput').value = '';
+let selectedFile =
+  null;
+
+
+/*
+   Incoming files
+*/
+
+const incomingFiles =
+  new Map();
+
+
+/*
+   FILE SELECT
+*/
+
+function handleFileSelect(
+  event
+){
+
+  const file =
+    event.target.files[0];
+
+
+  if (!file)
+    return;
+
+
+  if (
+    file.size >
+    MAX_FILE_SIZE
+  ){
+
+    toast(
+      'File must be smaller than 10 MB',
+      'err'
+    );
+
+
+    $('fileInput').value =
+      '';
+
+
+    return;
+  }
+
+
+  selectedFile =
+    file;
+
+
+  showFilePreview(
+    file
+  );
 }
 
-$('msgInput').addEventListener('input', () => {
-  const now = Date.now();
-  if (now - typingSentAt < 1500) return;
-  typingSentAt = now;
-  const m = { t: 'typing', name: myName };
-  if (isHost) hostBroadcast(m);
-  else if (hostConn && hostConn.open) hostConn.send(m);
-});
+
+/*
+   FILE PREVIEW
+*/
+
+function showFilePreview(
+  file
+){
+
+  const preview =
+    $('filePreview');
+
+
+  if (!preview)
+    return;
+
+
+  preview.innerHTML =
+    '';
+
+
+  const card =
+    document.createElement(
+      'div'
+    );
+
+  card.className =
+    'selected-file';
+
+
+  /*
+     IMAGE
+  */
+
+  if (
+    file.type.startsWith(
+      'image/'
+    )
+  ){
+
+    const img =
+      document.createElement(
+        'img'
+      );
+
+
+    img.className =
+      'selected-file-image';
+
+
+    img.src =
+      URL.createObjectURL(
+        file
+      );
+
+
+    img.onclick =
+      () =>
+        openSelectedImage(
+          file
+        );
+
+
+    card.appendChild(
+      img
+    );
+
+  } else {
+
+    const icon =
+      document.createElement(
+        'div'
+      );
+
+
+    icon.className =
+      'selected-file-icon';
+
+    icon.textContent =
+      '📄';
+
+
+    card.appendChild(
+      icon
+    );
+  }
+
+
+  /*
+     FILE INFO
+  */
+
+  const info =
+    document.createElement(
+      'div'
+    );
+
+  info.className =
+    'selected-file-info';
+
+
+  const name =
+    document.createElement(
+      'div'
+    );
+
+  name.className =
+    'selected-file-name';
+
+  name.textContent =
+    file.name;
+
+
+  const size =
+    document.createElement(
+      'div'
+    );
+
+  size.className =
+    'selected-file-size';
+
+  size.textContent =
+    formatFileSize(
+      file.size
+    );
+
+
+  info.appendChild(name);
+
+  info.appendChild(size);
+
+
+  card.appendChild(
+    info
+  );
+
+
+  /*
+     REMOVE
+  */
+
+  const remove =
+    document.createElement(
+      'button'
+    );
+
+
+  remove.type =
+    'button';
+
+  remove.className =
+    'remove-file';
+
+  remove.textContent =
+    '×';
+
+  remove.title =
+    'Remove file';
+
+
+  remove.onclick =
+    cancelSelectedFile;
+
+
+  card.appendChild(
+    remove
+  );
+
+
+  preview.appendChild(
+    card
+  );
+
+
+  preview.style.display =
+    'flex';
+}
+
+
+/*
+   FORMAT SIZE
+*/
+
+function formatFileSize(
+  bytes
+){
+
+  if (bytes < 1024)
+    return bytes + ' B';
+
+
+  if (
+    bytes <
+    1024 * 1024
+  ){
+
+    return (
+      bytes / 1024
+    ).toFixed(1) +
+    ' KB';
+  }
+
+
+  return (
+    bytes /
+    (1024 * 1024)
+  ).toFixed(2) +
+  ' MB';
+}
+
+
+/*
+   CANCEL FILE
+*/
+
+function cancelSelectedFile(){
+
+  selectedFile =
+    null;
+
+
+  if ($('fileInput'))
+    $('fileInput').value =
+      '';
+
+
+  const preview =
+    $('filePreview');
+
+
+  if (preview){
+
+    preview.innerHTML =
+      '';
+
+    preview.style.display =
+      'none';
+  }
+}
+
+
+/*
+   OPEN SELECTED IMAGE
+*/
+
+ /* =========================================================
+   OPEN IMAGE
+========================================================= */
+
+function openSelectedImage(file){
+  const url = URL.createObjectURL(file);
+  const modal = $('imageModal');
+  const image = $('previewImage');
+  image.onload = () => {
+    imageZoom = 1;
+    imageRotation = 0;
+    mouseX = 50;
+    mouseY = 50;
+    image.style.transformOrigin =
+      '50% 50%';
+    updateImageTransform();
+
+  };
+  image.src = url;
+  modal.classList.add('active');
+}
+
+/* =========================================================
+   SEND FILE
+========================================================= */
+
+async function sendFile(
+  file
+){
+
+  if (!file)
+    return;
+
+
+  if (
+    file.size >
+    MAX_FILE_SIZE
+  ){
+
+    toast(
+      'File must be smaller than 10 MB',
+      'err'
+    );
+
+    return;
+  }
+
+
+  /*
+     Connection check
+  */
+
+  if (
+    !isHost &&
+    (!hostConn ||
+      !hostConn.open)
+  ){
+
+    toast(
+      'Not connected',
+      'err'
+    );
+
+    return;
+  }
+
+
+  if (
+    isHost &&
+    guests.size === 0
+  ){
+
+    toast(
+      'No one has joined yet',
+      'info'
+    );
+
+    return;
+  }
+
+
+  const transferId =
+    crypto.randomUUID
+      ? crypto.randomUUID()
+      : Date.now() +
+        '-' +
+        Math.random()
+          .toString(36)
+          .slice(2);
+
+
+  const chunkSize =
+    16 * 1024;
+
+
+  const totalChunks =
+    Math.ceil(
+      file.size /
+      chunkSize
+    );
+
+
+  /*
+     START
+  */
+
+  const start = {
+
+    t: 'file-start',
+
+    transferId,
+
+    id: myId,
+
+    name: myName,
+
+    fileName:
+      file.name,
+
+    fileSize:
+      file.size,
+
+    fileType:
+      file.type ||
+      'application/octet-stream',
+
+    totalChunks,
+
+    ts: Date.now()
+  };
+
+
+  if (isHost){
+
+    hostBroadcast(
+      start
+    );
+
+  } else {
+
+    hostConn.send(
+      start
+    );
+  }
+
+
+  toast(
+    'Sending ' +
+    file.name +
+    '...',
+    'info'
+  );
+
+
+  /*
+     CHUNKS
+  */
+
+  for (
+    let i = 0;
+    i < totalChunks;
+    i++
+  ){
+
+    const startByte =
+      i * chunkSize;
+
+
+    const endByte =
+      Math.min(
+        startByte +
+          chunkSize,
+        file.size
+      );
+
+
+    const blob =
+      file.slice(
+        startByte,
+        endByte
+      );
+
+
+    const buffer =
+      await blob.arrayBuffer();
+
+
+    const chunk = {
+
+      t: 'file-chunk',
+
+      transferId,
+
+      index: i,
+
+      data: buffer
+    };
+
+
+    if (isHost){
+
+      hostBroadcast(
+        chunk
+      );
+
+    } else {
+
+      hostConn.send(
+        chunk
+      );
+    }
+
+
+    /*
+       Prevent flooding
+    */
+
+    await new Promise(
+      resolve =>
+        setTimeout(
+          resolve,
+          2
+        )
+    );
+  }
+
+
+  /*
+     END
+  */
+
+  const end = {
+
+    t: 'file-end',
+
+    transferId,
+
+    ts: Date.now()
+  };
+
+
+  if (isHost){
+
+    hostBroadcast(
+      end
+    );
+
+  } else {
+
+    hostConn.send(
+      end
+    );
+  }
+
+
+  /*
+     Own chat message
+  */
+
+addFileMessage(
+  file.name,
+  file.size,
+  'me',
+  myName,
+  file.type,
+  file
+);
+
+
+  toast(
+    'File sent',
+    'ok'
+  );
+}
+
+
+/* =========================================================
+   RECEIVE FILE
+========================================================= */
+
+function receiveFileStart(
+  d
+){
+
+  incomingFiles.set(
+    d.transferId,
+    {
+
+      fileName:
+        d.fileName,
+
+      fileSize:
+        d.fileSize,
+
+      fileType:
+        d.fileType,
+
+      totalChunks:
+        d.totalChunks,
+
+      chunks: [],
+
+      received: 0,
+
+      senderName:
+        d.name,
+
+      ts:
+        d.ts
+    }
+  );
+
+
+  toast(
+    'Receiving ' +
+    d.fileName +
+    '...',
+    'info'
+  );
+}
+
+
+function receiveFileChunk(
+  d
+){
+
+  const file =
+    incomingFiles.get(
+      d.transferId
+    );
+
+
+  if (!file)
+    return;
+
+
+  file.chunks[
+    d.index
+  ] =
+    d.data;
+
+
+  file.received++;
+}
+
+
+function receiveFileEnd(
+  d
+){
+
+  const file =
+    incomingFiles.get(
+      d.transferId
+    );
+
+
+  if (!file)
+    return;
+
+
+  /*
+     Make final Blob
+  */
+
+  const blob =
+    new Blob(
+      file.chunks,
+      {
+        type:
+          file.fileType
+      }
+    );
+
+
+  /*
+     Show file in chat
+  */
+
+  addFileMessage(
+    file.fileName,
+    file.fileSize,
+    'fr',
+    file.senderName,
+    file.fileType,
+    blob
+  );
+
+
+  incomingFiles.delete(
+    d.transferId
+  );
+
+
+  toast(
+    file.fileName +
+    ' received',
+    'ok'
+  );
+}
+
+
+/* =========================================================
+   FILE CHAT MESSAGE
+========================================================= */
+
+function addFileMessage(
+  fileName,
+  fileSize,
+  who,
+  senderName,
+  fileType,
+  blob
+){
+
+  const d = document.createElement('div');
+
+  d.className = 'msg ' + who + ' file-msg';
+
+
+  /* =====================================================
+     SENDER NAME
+  ===================================================== */
+
+  if (
+    who !== 'me' &&
+    senderName
+  ){
+
+    const w = document.createElement('div');
+
+    w.className = 'who';
+
+    w.style.setProperty(
+      '--h',
+      hue(senderName)
+    );
+
+    w.textContent = senderName;
+
+    d.appendChild(w);
+  }
+
+
+  /* =====================================================
+     FILE CARD
+  ===================================================== */
+
+  const card = document.createElement('div');
+
+  card.className = 'chat-file';
+
+
+  /* =====================================================
+     IMAGE FILE
+  ===================================================== */
+
+  if (
+    fileType &&
+    fileType.startsWith('image/') &&
+    blob
+  ){
+
+    const img = document.createElement('img');
+
+    img.className = 'chat-file-image';
+
+    img.src = URL.createObjectURL(blob);
+
+    img.alt = fileName;
+
+    img.title = 'Click to view';
+
+    img.onclick = () => {
+
+      openSelectedImage(blob);
+
+    };
+
+    card.appendChild(img);
+
+  }
+
+
+  /* =====================================================
+     NORMAL FILE
+  ===================================================== */
+
+  else {
+
+    const icon = document.createElement('div');
+
+    icon.className = 'chat-file-icon';
+
+    icon.textContent = '📄';
+
+    card.appendChild(icon);
+
+
+    const info = document.createElement('div');
+
+    info.className = 'chat-file-info';
+
+
+    const name = document.createElement('div');
+
+    name.className = 'chat-file-name';
+
+    name.textContent = fileName;
+
+
+    const size = document.createElement('div');
+
+    size.className = 'chat-file-size';
+
+    size.textContent = formatFileSize(fileSize);
+
+
+    info.appendChild(name);
+
+    info.appendChild(size);
+
+    card.appendChild(info);
+
+  }
+
+
+  /* =====================================================
+     DOWNLOAD BUTTON
+  ===================================================== */
+
+  if (blob){
+
+    const download = document.createElement('button');
+
+    download.type = 'button';
+
+    download.className = 'file-download';
+
+    download.textContent = '↓';
+
+    download.title = 'Download';
+
+
+    download.onclick = () => {
+
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+
+      a.href = url;
+
+      a.download = fileName;
+
+      document.body.appendChild(a);
+
+      a.click();
+
+      a.remove();
+
+
+      setTimeout(() => {
+
+        URL.revokeObjectURL(url);
+
+      }, 1000);
+
+    };
+
+
+    card.appendChild(download);
+
+  }
+
+
+  d.appendChild(card);
+
+
+  /* =====================================================
+     TIME
+  ===================================================== */
+
+  const m = document.createElement('div');
+
+  m.className = 'time';
+
+  m.textContent = timeNow();
+
+
+  d.appendChild(m);
+
+
+  /* =====================================================
+     CHAT
+  ===================================================== */
+
+  $('chatBox').appendChild(d);
+
+  $('chatBox').scrollTop = 1e7;
+
+}
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+function sendMsg(){
+
+  const text =
+    $('msgInput')
+      .value
+      .trim();
+
+
+  /*
+     Nothing to send
+  */
+
+  if (
+    !text &&
+    !selectedFile
+  ){
+
+    return;
+  }
+
+
+  /*
+     FILE
+  */
+
+  if (selectedFile){
+
+    const file =
+      selectedFile;
+
+
+    /*
+       Clear selection immediately
+       so UI doesn't remain stuck.
+    */
+
+    cancelSelectedFile();
+
+
+    sendFile(
+      file
+    );
+  }
+
+
+  /*
+     TEXT
+  */
+
+  if (text){
+
+    const m = {
+
+      t: 'msg',
+
+      id: myId,
+
+      name: myName,
+
+      text,
+
+      ts: Date.now()
+    };
+
+
+    if (isHost){
+
+      if (
+        guests.size === 0
+      ){
+
+        toast(
+          'No one has joined yet. Share the room code.',
+          'info'
+        );
+      }
+
+
+      hostBroadcast(
+        m
+      );
+
+    }
+
+    else if (
+      hostConn &&
+      hostConn.open
+    ){
+
+      hostConn.send(
+        m
+      );
+
+    }
+
+    else {
+
+      toast(
+        'Not connected',
+        'err'
+      );
+
+      return;
+    }
+
+
+    addMsg(
+      text,
+      'me',
+      '',
+      m.ts
+    );
+
+
+    $('msgInput').value =
+      '';
+  }
+}
+
+
+/* =========================================================
+   MESSAGE TYPING
+========================================================= */
+
+$('msgInput').addEventListener(
+  'input',
+  () => {
+
+    const now =
+      Date.now();
+
+
+    if (
+      now -
+      typingSentAt <
+      1500
+    ){
+
+      return;
+    }
+
+
+    typingSentAt =
+      now;
+
+
+    const m = {
+
+      t: 'typing',
+
+      name:
+        myName
+    };
+
+
+    if (isHost){
+
+      hostBroadcast(
+        m
+      );
+
+    } else if (
+      hostConn &&
+      hostConn.open
+    ){
+
+      hostConn.send(
+        m
+      );
+    }
+  }
+);
+
 
 /* =========================================================
    EMOJI PICKER
 ========================================================= */
+
 const EMOJI_CATS = [
-  { label: '😀', ranges: [[0x1F600, 0x1F64F]] },              // Smileys & Emotion
-  { label: '🐻', ranges: [[0x1F300, 0x1F5FF]] },              // Nature, faces, misc symbols/pictographs
-  { label: '🚗', ranges: [[0x1F680, 0x1F6FF]] },              // Transport & Places
-  { label: '🎉', ranges: [[0x1F900, 0x1F9FF], [0x1FA70, 0x1FAFF]] }, // Extra people/food/objects
-  { label: '❤️', ranges: [[0x2600, 0x26FF], [0x2700, 0x27BF]] }      // Symbols & dingbats
+
+  {
+    label: '😀',
+    ranges: [
+      [0x1F600, 0x1F64F]
+    ]
+  },
+
+  {
+    label: '🐻',
+    ranges: [
+      [0x1F300, 0x1F5FF]
+    ]
+  },
+
+  {
+    label: '🚗',
+    ranges: [
+      [0x1F680, 0x1F6FF]
+    ]
+  },
+
+  {
+    label: '🎉',
+    ranges: [
+      [0x1F900, 0x1F9FF],
+      [0x1FA70, 0x1FAFF]
+    ]
+  },
+
+  {
+    label: '❤️',
+    ranges: [
+      [0x2600, 0x26FF],
+      [0x2700, 0x27BF]
+    ]
+  }
+
 ];
-let emojiBuilt = false;
+
+
+let emojiBuilt =
+  false;
+
 
 function isEmojiChar(ch){
-  try { return /\p{Extended_Pictographic}/u.test(ch); }
-  catch { return true; }
+
+  try {
+
+    return /\p{Extended_Pictographic}/u
+      .test(ch);
+
+  } catch {
+
+    return true;
+  }
 }
 
-function rangeEmojis(ranges){
-  const out = [];
-  ranges.forEach(([start, end]) => {
-    for (let cp = start; cp <= end; cp++){
-      const ch = String.fromCodePoint(cp);
-      if (isEmojiChar(ch)) out.push(ch);
+
+function rangeEmojis(
+  ranges
+){
+
+  const out =
+    [];
+
+
+  ranges.forEach(
+    ([start, end]) => {
+
+      for (
+        let cp = start;
+        cp <= end;
+        cp++
+      ){
+
+        const ch =
+          String.fromCodePoint(
+            cp
+          );
+
+
+        if (
+          isEmojiChar(ch)
+        ){
+
+          out.push(ch);
+        }
+      }
     }
-  });
+  );
+
+
   return out;
 }
 
+
 function buildEmojiPicker(){
-  if (emojiBuilt) return;
-  emojiBuilt = true;
-  const tabs = $('emojiTabs');
-  tabs.innerHTML = '';
-  EMOJI_CATS.forEach((cat, i) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'emoji-tab' + (i === 0 ? ' active' : '');
-    b.textContent = cat.label;
-    b.onclick = () => selectEmojiCat(i);
-    tabs.appendChild(b);
-  });
+
+  if (emojiBuilt)
+    return;
+
+
+  emojiBuilt =
+    true;
+
+
+  const tabs =
+    $('emojiTabs');
+
+
+  tabs.innerHTML =
+    '';
+
+
+  EMOJI_CATS.forEach(
+    (cat, i) => {
+
+      const b =
+        document.createElement(
+          'button'
+        );
+
+
+      b.type =
+        'button';
+
+
+      b.className =
+        'emoji-tab' +
+        (
+          i === 0
+            ? ' active'
+            : ''
+        );
+
+
+      b.textContent =
+        cat.label;
+
+
+      b.onclick =
+        () =>
+          selectEmojiCat(i);
+
+
+      tabs.appendChild(b);
+    }
+  );
+
+
   renderEmojiGrid(0);
 }
 
+
 function renderEmojiGrid(i){
-  const grid = $('emojiGrid');
-  grid.innerHTML = '';
-  const frag = document.createDocumentFragment();
-  rangeEmojis(EMOJI_CATS[i].ranges).forEach(ch => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'emoji-item';
-    b.textContent = ch;
-    b.onclick = () => insertEmoji(ch);
-    frag.appendChild(b);
-  });
-  grid.appendChild(frag);
+
+  const grid =
+    $('emojiGrid');
+
+
+  grid.innerHTML =
+    '';
+
+
+  const frag =
+    document.createDocumentFragment();
+
+
+  rangeEmojis(
+    EMOJI_CATS[i].ranges
+  ).forEach(
+    ch => {
+
+      const b =
+        document.createElement(
+          'button'
+        );
+
+
+      b.type =
+        'button';
+
+
+      b.className =
+        'emoji-item';
+
+
+      b.textContent =
+        ch;
+
+
+      b.onclick =
+        () =>
+          insertEmoji(ch);
+
+
+      frag.appendChild(b);
+    }
+  );
+
+
+  grid.appendChild(
+    frag
+  );
 }
 
+
 function selectEmojiCat(i){
-  [...$('emojiTabs').children].forEach((b, idx) => b.classList.toggle('active', idx === i));
+
+  [
+    ...$('emojiTabs').children
+  ].forEach(
+    (b, idx) =>
+      b.classList.toggle(
+        'active',
+        idx === i
+      )
+  );
+
+
   renderEmojiGrid(i);
 }
 
+
 function insertEmoji(ch){
-  const input = $('msgInput');
-  const start = input.selectionStart ?? input.value.length;
-  const end = input.selectionEnd ?? input.value.length;
-  input.value = input.value.slice(0, start) + ch + input.value.slice(end);
-  const pos = start + ch.length;
+
+  const input =
+    $('msgInput');
+
+
+  const start =
+    input.selectionStart ??
+    input.value.length;
+
+
+  const end =
+    input.selectionEnd ??
+    input.value.length;
+
+
+  input.value =
+    input.value.slice(
+      0,
+      start
+    ) +
+    ch +
+    input.value.slice(
+      end
+    );
+
+
+  const pos =
+    start + ch.length;
+
+
   input.focus();
-  input.setSelectionRange(pos, pos);
+
+
+  input.setSelectionRange(
+    pos,
+    pos
+  );
 }
+
 
 function toggleEmojiPicker(){
-  const p = $('emojiPicker');
-  const open = p.classList.toggle('open');
-  if (open) buildEmojiPicker();
+
+  const p =
+    $('emojiPicker');
+
+
+  const open =
+    p.classList.toggle(
+      'open'
+    );
+
+
+  if (open)
+    buildEmojiPicker();
 }
 
-document.addEventListener('click', e => {
-  const p = $('emojiPicker');
-  if (!p.classList.contains('open')) return;
-  if (p.contains(e.target) || e.target.id === 'emojiBtn') return;
-  p.classList.remove('open');
-});
+
+document.addEventListener(
+  'click',
+  e => {
+
+    const p =
+      $('emojiPicker');
+
+
+    if (
+      !p.classList.contains(
+        'open'
+      )
+    ){
+
+      return;
+    }
+
+
+    if (
+      p.contains(e.target) ||
+      e.target.id ===
+        'emojiBtn'
+    ){
+
+      return;
+    }
+
+
+    p.classList.remove(
+      'open'
+    );
+  }
+);
+
 
 /* =========================================================
    LEAVE / RESET
 ========================================================= */
+
 function destroyPeer(){
-  try { if (hostConn) hostConn.close(); } catch {}
-  try { if (peer) peer.destroy(); } catch {}
-  peer = null; hostConn = null; guests.clear();
+
+  try {
+
+    if (hostConn)
+      hostConn.close();
+
+  } catch {}
+
+
+  try {
+
+    if (peer)
+      peer.destroy();
+
+  } catch {}
+
+
+  peer =
+    null;
+
+  hostConn =
+    null;
+
+  guests.clear();
 }
 
-function leaveRoom(silent){
+
+function leaveRoom(
+  silent
+){
+
   destroyPeer();
-  members.clear(); isHost = false; roomPassword = '';
-  $('chatBox').innerHTML = ''; $('typing').innerHTML = '';
-  $('emojiPicker').classList.remove('open');
+
+
+  members.clear();
+
+  isHost =
+    false;
+
+  roomPassword =
+    '';
+
+
+  $('chatBox').innerHTML =
+    '';
+
+  $('typing').innerHTML =
+    '';
+
+
+  $('emojiPicker')
+    .classList
+    .remove('open');
+
+
+  cancelSelectedFile();
+
+
   setJoining(false);
-  $('joinStatus').className = 'status';
-  $('joinPass').style.display = 'none'; $('joinPass').value = '';
+
+
+  $('joinStatus')
+    .className =
+    'status';
+
+
+  $('joinPass')
+    .style
+    .display =
+    'none';
+
+
+  $('joinPass').value =
+    '';
+
+
   show('s-options');
 }
+
 
 function leaveToOptions(){
-  destroyPeer(); setJoining(false); $('joinStatus').className = 'status';
-  $('joinPass').style.display = 'none'; $('joinPass').value = '';
+
+  destroyPeer();
+
+
+  cancelSelectedFile();
+
+
+  setJoining(false);
+
+
+  $('joinStatus')
+    .className =
+    'status';
+
+
+  $('joinPass')
+    .style
+    .display =
+    'none';
+
+
+  $('joinPass').value =
+    '';
+
+
   show('s-options');
 }
+
 
 /* =========================================================
    QR SCANNER
 ========================================================= */
-let scanStream = null, scanning = false;
+
+let scanStream =
+  null;
+
+let scanning =
+  false;
+
 
 async function openScanner(){
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    toast('Camera needs a secure (https) page. Type the code instead.', 'err'); return;
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ){
+
+    toast(
+      'Camera needs a secure (https) page. Type the code instead.',
+      'err'
+    );
+
+    return;
   }
-  if (typeof jsQR === 'undefined'){
-    toast('QR library not loaded. Check your internet and reload.', 'err'); return;
+
+
+  if (
+    typeof jsQR ===
+    'undefined'
+  ){
+
+    toast(
+      'QR library not loaded. Check your internet and reload.',
+      'err'
+    );
+
+    return;
   }
+
+
   try {
-    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-  } catch (e) {
-    console.error('Camera error:', e);
-    toast('Camera permission was denied', 'err'); return;
+
+    scanStream =
+      await navigator.mediaDevices
+        .getUserMedia({
+          video: {
+            facingMode:
+              'environment'
+          }
+        });
+
+  } catch (e){
+
+    console.error(
+      'Camera error:',
+      e
+    );
+
+
+    toast(
+      'Camera permission was denied',
+      'err'
+    );
+
+    return;
   }
-  const v = $('scanVideo');
-  v.srcObject = scanStream; await v.play();
-  $('scanner').classList.add('open');
-  scanning = true; requestAnimationFrame(scanTick);
+
+
+  const v =
+    $('scanVideo');
+
+
+  v.srcObject =
+    scanStream;
+
+
+  await v.play();
+
+
+  $('scanner')
+    .classList
+    .add('open');
+
+
+  scanning =
+    true;
+
+
+  requestAnimationFrame(
+    scanTick
+  );
 }
+
 
 function scanTick(){
-  if (!scanning) return;
-  const v = $('scanVideo');
-  if (v.readyState >= 4){            // 4 = HAVE_ENOUGH_DATA
-    const c = scanTick.c || (scanTick.c = document.createElement('canvas'));
-    c.width = v.videoWidth; c.height = v.videoHeight;
-    const ctx = c.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(v, 0, 0, c.width, c.height);
-    const img = ctx.getImageData(0, 0, c.width, c.height);
-    const r = jsQR(img.data, img.width, img.height);
-    const code = r && parseRoom(r.data);
-    if (code){ closeScanner(); $('joinCode').value = code; joinRoom(); return; }
+
+  if (!scanning)
+    return;
+
+
+  const v =
+    $('scanVideo');
+
+
+  if (
+    v.readyState >= 4
+  ){
+
+    const c =
+      scanTick.c ||
+      (
+        scanTick.c =
+          document.createElement(
+            'canvas'
+          )
+      );
+
+
+    c.width =
+      v.videoWidth;
+
+    c.height =
+      v.videoHeight;
+
+
+    const ctx =
+      c.getContext(
+        '2d',
+        {
+          willReadFrequently:
+            true
+        }
+      );
+
+
+    ctx.drawImage(
+      v,
+      0,
+      0,
+      c.width,
+      c.height
+    );
+
+
+    const img =
+      ctx.getImageData(
+        0,
+        0,
+        c.width,
+        c.height
+      );
+
+
+    const r =
+      jsQR(
+        img.data,
+        img.width,
+        img.height
+      );
+
+
+    const code =
+      r &&
+      parseRoom(
+        r.data
+      );
+
+
+    if (code){
+
+      closeScanner();
+
+      $('joinCode').value =
+        code;
+
+      joinRoom();
+
+      return;
+    }
   }
-  requestAnimationFrame(scanTick);
+
+
+  requestAnimationFrame(
+    scanTick
+  );
 }
+
 
 function closeScanner(){
-  scanning = false;
-  if (scanStream) scanStream.getTracks().forEach(t => t.stop());
-  scanStream = null;
-  $('scanner').classList.remove('open');
+
+  scanning =
+    false;
+
+
+  if (scanStream){
+
+    scanStream
+      .getTracks()
+      .forEach(
+        t =>
+          t.stop()
+      );
+  }
+
+
+  scanStream =
+    null;
+
+
+  $('scanner')
+    .classList
+    .remove('open');
 }
 
+
 /* =========================================================
-   INIT – opened from a QR / link?
+   INIT
 ========================================================= */
+
 (function init(){
-  const r = parseRoom(new URLSearchParams(location.search).get('room'));
+
+  const r =
+    parseRoom(
+      new URLSearchParams(
+        location.search
+      ).get('room')
+    );
+
+
   if (r){
-    pendingRoom = r;
-    $('userName').textContent = '';
-    $('nameError').textContent = 'Enter your name to join room ' + r + '.';
+
+    pendingRoom =
+      r;
+
+
+    $('userName').textContent =
+      '';
+
+
+    $('nameError').textContent =
+      'Enter your name to join room ' +
+      r +
+      '.';
   }
+
 })();
-window.addEventListener('beforeunload', destroyPeer);
-window.addEventListener('beforeunload', destroyPeer);
+
+
+/* =========================================================
+   BEFORE UNLOAD
+========================================================= */
+
+window.addEventListener(
+  'beforeunload',
+  destroyPeer
+);

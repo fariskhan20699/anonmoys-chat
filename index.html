@@ -244,16 +244,44 @@
 
     <div id="chatBox" role="log"></div>
     <div id="typing"></div>
-    <div class="composer">
-      <div id="emojiPicker" class="emoji-picker">
-        <div class="emoji-tabs" id="emojiTabs"></div>
-        <div class="emoji-grid" id="emojiGrid"></div>
-      </div>
-      <button type="button" class="emoji-btn" id="emojiBtn" onclick="toggleEmojiPicker()">☺</button>
-      <input id="msgInput" placeholder="Message" maxlength="1000" autocomplete="off"
-             onkeydown="if(event.key==='Enter')sendMsg()">
-      <button class="send" onclick="sendMsg()" aria-label="Send">➤</button>
+<div class="composer-area">
+
+  <!-- FILE PREVIEW -->
+  <div id="filePreview" class="file-preview"></div>
+
+  <div class="composer">
+
+    <!-- EMOJI PICKER -->
+    <div id="emojiPicker" class="emoji-picker">
+      <div class="emoji-tabs" id="emojiTabs"></div>
+      <div class="emoji-grid" id="emojiGrid"></div>
     </div>
+
+    <!-- FILE INPUT -->
+    <input
+      type="file"
+      id="fileInput"
+      hidden
+      onchange="handleFileSelect(event)"
+    >
+
+    <!-- ATTACH FILE -->
+    <button type="button" class="file-btn" onclick="$('fileInput').click()" aria-label="Attach file" title="Attach file">📎
+    </button>
+
+    <!-- EMOJI BUTTON -->
+    <button type="button" class="emoji-btn" id="emojiBtn" onclick="toggleEmojiPicker()">☺
+    </button>
+
+    <!-- MESSAGE INPUT -->
+    <input id="msgInput" placeholder="Message" maxlength="1000" autocomplete="off" onkeydown="if(event.key==='Enter')sendMsg()">
+    <!-- SEND -->
+    <button class="send" onclick="sendMsg()" aria-label="Send">➤
+    </button>
+
+  </div>
+
+</div>
   </section>
 
 </main>
@@ -266,9 +294,14 @@
   <button class="btn-ghost" onclick="closeScanner()">Cancel</button>
 </div>
 
+<!-- <footer class="site-footer">
+    Developed by <strong>Faris Khan</strong>
+</footer> -->
+
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="./img/bg-video.mp4" type="video/mp4">
 </video>
+
 <div id="imageModal" class="image-modal">
 
     <button class="close-image" onclick="closeImage()">×</button>
@@ -277,8 +310,8 @@
     <button class="image-nav next-image" onclick="nextImage()">❯</button>
 
     <div class="zoom-controls">
-        <button onclick="zoomIn()">+</button>
         <button onclick="zoomOut()">−</button>
+        <button onclick="zoomIn()">+</button>
         <button onclick="resetZoom()">↺</button>
         <button onclick="rotateImage()">⟳</button>
     </div>
@@ -286,6 +319,7 @@
     <img id="previewImage" src="" alt="Instruction preview">
 
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>

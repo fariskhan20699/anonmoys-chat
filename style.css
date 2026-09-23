@@ -891,6 +891,98 @@ input:focus-visible {
   background: rgba(255, 255, 255, .22);
 }
 
+.file-preview {
+    position: absolute;
+    left: 28px;
+    bottom: 115px;
+    display: none;
+    width: 110px;
+    height: 110px;
+    padding: 3px;
+    background:transparent;
+    border-radius: 12px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    z-index: 9999;
+}
+
+.file-preview.show {
+    display: block;
+}
+
+.file-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,.75);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .2s ease;
+  flex-shrink: 0;
+}
+
+.file-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.file-preview img {
+    width: 150px;
+    height: 100%;
+    object-fit: cover;
+    /* border-radius: 9px; */
+}
+
+.file-preview .remove-file {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: white;
+    font-size: 16px;
+    line-height: 2px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.selected-file {
+    position: relative;
+    width: 220px;
+    max-width: 70%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.selected-file img {
+    display: block;
+    width: 100%;
+    max-height: 225px;
+    object-fit: cover;
+}
+
+.remove-file {
+    position: absolute;
+    top: 1px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    cursor: pointer;
+}
+
 /* ---------- EMOJI PICKER ---------- */
 .emoji-picker {
   position: absolute;
@@ -1428,6 +1520,116 @@ input:focus-visible {
     right: 25px;
 }
 
+/* ---------- FILE MESSAGE ---------- */
+
+.msg.file-msg {
+    width: fit-content;
+    max-width: 260px;
+}
+
+.msg.file-msg .file-card {
+    width: 220px;
+    max-width: 220px;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.msg.file-msg .file-card img {
+    display: block;
+    width: 220px;
+    height: 180px;
+    max-width: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* ---------- FILE MESSAGE ---------- */
+
+.msg.file-msg {
+    width: fit-content;
+    max-width: 78%;
+    padding: 6px;
+}
+
+.msg.file-msg .chat-file {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+.msg.file-msg .chat-file-image {
+    display: block;
+
+    /* image apne original ratio ke mutabiq rahegi */
+    width: auto;
+    height: auto;
+
+    /* maximum limit */
+    max-width: 320px;
+    max-height: 360px;
+
+    object-fit: contain;
+
+    border-radius: 12px;
+    cursor: pointer;
+
+    transition: transform 0.2s ease;
+}
+
+.msg.file-msg .chat-file-image:hover {
+    transform: scale(1.01);
+}
+
+.msg.file-msg .chat-file-info {
+    min-width: 150px;
+    max-width: 220px;
+    overflow: hidden;
+}
+
+.msg.file-msg .chat-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.msg.file-msg .time {
+    margin-top: 4px;
+}
+
+
+/* ---------- FILE DOWNLOAD ---------- */
+
+.msg.file-msg .file-download {
+    position: absolute;
+
+    right: 8px;
+    bottom: 8px;
+
+    width: 32px;
+    height: 32px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+
+    font-size: 19px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    z-index: 5;
+}
+
+/*---------- FOOTER -----------*/
+ 
+
 /* ---------- MOBILE ---------- */
 @media (max-width: 600px) {
   body {
@@ -1460,10 +1662,12 @@ input:focus-visible {
   }
 
   .msg {
-    max-width: 86%;
+    max-width: 260px;
+    width: fit-content;
     font-size: 13px;
   }
 
+  
   .emoji-grid {
     grid-template-columns: repeat(6, 1fr);
   }
@@ -1479,6 +1683,15 @@ input:focus-visible {
   .pass-row button {
     flex: 1 1 0%;
   }
+
+  .msg.file-msg {
+        max-width: 85%;
+    }
+
+  .msg.file-msg .chat-file-image {
+        max-width: 260px;
+        max-height: 320px;
+    }
 }
 
 @media (max-width: 360px) {
@@ -1492,6 +1705,15 @@ input:focus-visible {
     font-size: 20px;
     letter-spacing: 4px;
   }
+
+    .msg.file-msg {
+        max-width: 85%;
+    }
+
+    .msg.file-msg .chat-file-image {
+        max-width: 260px;
+        max-height: 320px;
+    }
 }
 
 /* ---------- REDUCED MOTION ---------- */
