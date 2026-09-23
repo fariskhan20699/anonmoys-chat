@@ -1804,7 +1804,9 @@ function hostData(
      NORMAL MESSAGE
   */
 
-  if (d.t === 'msg'){
+  if (
+    d.t === 'msg'
+  ){
 
     const m = {
 
@@ -1874,7 +1876,42 @@ function hostData(
   ){
 
     /*
-       Guest -> Host -> Other Guests
+       Guest -> Host
+    */
+
+    if (
+      d.t === 'file-start'
+    ){
+
+      receiveFileStart(
+        d
+      );
+
+    }
+
+    else if (
+      d.t === 'file-chunk'
+    ){
+
+      receiveFileChunk(
+        d
+      );
+
+    }
+
+    else if (
+      d.t === 'file-end'
+    ){
+
+      receiveFileEnd(
+        d
+      );
+
+    }
+
+
+    /*
+       Host -> ALL OTHER GUESTS
     */
 
     hostBroadcast(
