@@ -73,6 +73,7 @@ function showHelp(type){
           class="help-input"
           maxlength="50"
           placeholder="Enter your name"
+          required
         >
 
         <label class="help-label">Email</label>
@@ -83,6 +84,7 @@ function showHelp(type){
           class="help-input"
           maxlength="100"
           placeholder="Enter your email"
+          required
         >
 
         <label class="help-label">Subject</label>
@@ -110,6 +112,7 @@ function showHelp(type){
           class="help-textarea"
           maxlength="500"
           placeholder="Describe the problem..."
+          required
         ></textarea>
 
         <button class="btn-main" onclick="submitProblem()">
