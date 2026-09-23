@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Net Less | Room Chat</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="./img/directchat-logo.png">
+<base target="_blank">
+</head>
+<body>
+
+<div id="toasts" aria-live="polite"></div>
+
+<main class="card">
+
+  <!-- 1. NAME -->
+  <section id="s-home" class="step active">
+    <div class="logo-wrap"><span class="ring"></span><span class="ring r2"></span>
+      <img src="./img/directchat-logo.png" alt="Net Less logo" class="app-logo"></div>
+    <h1>Net Less</h1>
+    <p class="sub">Room chat for people on the same Wi-Fi or hotspot</p>
+    <label class="label" for="name">Monkey Name</label>
+    <input id="name" placeholder="e.g. Ahmed" maxlength="20" autocomplete="off">
+    <small id="nameError" class="name-error">Enter your Monkey Name to continue.</small>
+    <button class="btn-main" onclick="goToRoomOptions()">Continue</button>
+  </section>
+
+  <!-- 2. OPTIONS -->
+  <section id="s-options" class="step">
+    <img src="./img/directchat-logo.png" alt="" class="app-logo small">
+    <h1>Hi, <span id="userName"></span></h1>
+    <p class="sub">Start a room or join one with a code</p>
+
+    <button class="choice" onclick="startHost()">
+      <span class="choice-ico">＋</span>
+      <span><b>Create a room</b><small>You get a code and a QR to share</small></span>
+    </button>
+    <button class="choice" onclick="show('s-join')">
+      <span class="choice-ico">⌗</span>
+      <span><b>Join a room</b><small>Type the code or scan the QR</small></span>
+    </button>
+    <button class="choice" onclick="show('s-help')">
+    <span class="choice-ico">?</span>
+    <span><b>Help & Support</b><small>Get help or report a problem</small></span>  </button>
+    <button class="back" onclick="show('s-home')">← Change name</button>
+  </section>
+
+  <!-- 3. HOST -->
+  <section id="s-host" class="step">
+    <h1>Your room is live</h1>
+    <p class="sub">Share this code. Keep this page open while people chat.</p>
+
+    <div class="code-board" id="codeBoard" aria-label="Room code"></div>
+
+    <div class="row tight">
+      <button class="btn-ghost" onclick="copyCode()">Copy link</button>
+      <button class="btn-ghost" onclick="copyLink()">Paste link</button>
+    </div>
+
+    <div class="qr-frame"><div id="qr"></div></div>
+    <p class="hint" id="qrHint">Scan with any phone camera to join instantly.</p>
+
+    <hr class="divider">
+
+    <div class="list-head"><span>Room password</span><span class="badge">4 digit</span></div>
+    <div class="pass-row">
+      <input id="passInput" maxlength="4" inputmode="numeric" placeholder="e.g. 1234" autocomplete="off">
+      <button class="btn-ghost" onclick="setPassword()">Set</button>
+      <button class="btn-ghost" onclick="removePassword()">Remove</button>
+    </div>
+    <p class="hint" id="passHint">No password (optional). Set one for extra safety.</p>
+
+    <hr class="divider">
+    <div class="list-head"><span>People in the room</span><span class="badge" id="memberCount">1</span></div>
+    <div id="memberList"></div>
+    <div id="waiting" class="waiting"><span class="pulse"></span>Waiting for people to join…</div>
+
+    <button class="btn-main" onclick="show('s-chat')">Open chat</button>
+    <button class="back danger" onclick="closeRoom()">Close room</button>
+  </section>
+
+  <!-- 4. JOIN -->
+  <section id="s-join" class="step">
+    <h1>Join a room</h1>
+    <p class="sub">Enter the 9-character code from the host</p>
+
+    <input id="joinCode" class="code-input" placeholder="RCFY46B43" maxlength="80"
+           autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <input id="joinPass" class="code-input" placeholder="Password (4 digits)" maxlength="4"
+           inputmode="numeric" autocomplete="off" style="display:none; margin-top:8px; letter-spacing:8px; text-align:center;">
+    <button class="btn-main" id="joinBtn" onclick="joinAction()">
+      <span class="btn-label">Join room</span><span class="spinner"></span>
+    </button>
+    <div class="or"><span>or</span></div>
+    <button class="btn-ghost" onclick="openScanner()">Scan QR code</button>
+
+    <div id="joinStatus" class="status"></div>
+    <button class="back" onclick="leaveToOptions()">← Back</button>
+  </section>
+
+  <!-- 5. CHAT -->
+  <section id="s-chat" class="step">
+    <header class="chat-head">
+      <div class="chat-title">
+        <h2>Room <span id="roomChip" class="chip"></span></h2>
+        <div class="stack" id="avatarStack"></div>
+      </div>
+      <div class="head-actions">
+        <button class="mini" id="roomInfoBtn" onclick="show('s-host')" title="Room code and QR">Code</button>
+        <button class="mini danger" onclick="leaveRoom()">Leave</button>
+      </div>
+    </header>
+
+    <div id="chatBox" role="log"></div>
+    <div id="typing"></div>
+    <div class="composer">
+      <div id="emojiPicker" class="emoji-picker">
+        <div class="emoji-tabs" id="emojiTabs"></div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+      <button type="button" class="emoji-btn" id="emojiBtn" onclick="toggleEmojiPicker()">☺</button>
+      <input id="msgInput" placeholder="Message" maxlength="1000" autocomplete="off"
+             onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="send" onclick="sendMsg()" aria-label="Send">➤</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- QR SCANNER -->
+<div id="scanner" class="scanner">
+  <video id="scanVideo" playsinline muted></video>
+  <div class="scan-frame"><span class="scan-line"></span></div>
+  <p>Point the camera at the room QR</p>
+  <button class="btn-ghost" onclick="closeScanner()">Cancel</button>
+</div>
+
+<video autoplay muted loop playsinline id="bgVideo">
+  <source src="./img/bg-video.mp4" type="video/mp4">
+</video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
