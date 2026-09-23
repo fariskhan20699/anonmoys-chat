@@ -65,6 +65,26 @@ function showHelp(type){
       content: `
         <p>Tell us what went wrong.</p>
 
+        <label class="help-label">Name</label>
+
+        <input
+          type="text"
+          id="problemName"
+          class="help-input"
+          maxlength="50"
+          placeholder="Enter your name"
+        >
+
+        <label class="help-label">Email</label>
+
+        <input
+          type="email"
+          id="problemEmail"
+          class="help-input"
+          maxlength="100"
+          placeholder="Enter your email"
+        >
+
         <label class="help-label">Subject</label>
 
         <select id="problemSubject" class="help-select">
