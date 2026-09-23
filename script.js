@@ -20,7 +20,162 @@ function show(id){
   const s = $(id); if (s) s.classList.add('active');
   if (id === 's-chat') setTimeout(() => $('msgInput').focus(), 150);
 }
+function showHelp(type){
+  const menu = $('helpMenu');
+  const details = $('helpDetails');
+  const help = {
 
+    join: {
+      title: 'How to join a room',
+      icon: '⌗',
+      content: `
+        <p>1. Ask the host for the 9-character room code.</p>
+        <p>2. Enter the code on the Join a room screen.</p>
+        <p>3. If the room has a password, enter the 4-digit password.</p>
+        <p>4. You can also scan the host's QR code to join.</p>
+      `
+    },
+
+    host: {
+      title: 'How to host a room',
+      icon: '＋',
+      content: `
+        <p>1. Select <b>Create a room</b>.</p>
+        <p>2. Your room code and QR code will appear.</p>
+        <p>3. Share the code or QR code with other people.</p>
+        <p>4. Keep this page open while people are chatting.</p>
+        <p>5. You can also set an optional 4-digit password.</p>
+      `
+    },
+
+    connection: {
+      title: 'Connection problems',
+      icon: '⌁',
+      content: `
+        <p>• Make sure everyone is connected to the same Wi-Fi or hotspot.</p>
+        <p>• The host must keep the room open.</p>
+        <p>• Check that the room code is correct.</p>
+        <p>• If the connection fails, try leaving and joining again.</p>
+      `
+    },
+
+    report: {
+      title: 'Report a problem',
+      icon: '!',
+      content: `
+        <p>Tell us what went wrong.</p>
+
+        <label class="help-label">Subject</label>
+
+        <select id="problemSubject" class="help-select">
+          <option value="">Select a problem</option>
+          <option value="Can't create a room">Can't create a room</option>
+          <option value="Can't join a room">Can't join a room</option>
+          <option value="Room code not working">Room code not working</option>
+          <option value="QR code not working">QR code not working</option>
+          <option value="Connection problem">Connection problem</option>
+          <option value="Room password problem">Room password problem</option>
+          <option value="Messages not sending">Messages not sending</option>
+          <option value="Chat not updating">Chat not updating</option>
+          <option value="Emoji problem">Emoji problem</option>
+          <option value="Camera / QR scanner problem">Camera / QR scanner problem</option>
+          <option value="Page not loading">Page not loading</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label class="help-label">Description</label>
+
+        <textarea
+          id="problemText"
+          class="help-textarea"
+          maxlength="500"
+          placeholder="Describe the problem..."
+        ></textarea>
+
+        <button class="btn-main" onclick="submitProblem()">
+          Send Report
+        </button>
+      `
+    }
+
+  };
+  const item = help[type];
+  if (!item) return;
+  menu.style.display = 'none';
+  details.innerHTML = `
+    <div class="help-title">
+      <span class="help-title-icon">${item.icon}</span>
+      <h1>${item.title}</h1>
+    </div>
+
+    <div class="help-instructions">
+      ${item.content}
+    </div>
+
+    <button class="back" onclick="backToHelpMenu()">
+      ← Back to Help
+    </button>
+  `;
+  details.style.display = 'block';
+}
+function backToHelpMenu(){
+  $('helpDetails').style.display = 'none';
+  $('helpDetails').innerHTML = '';
+  $('helpMenu').style.display = 'block';
+
+}
+async function submitProblem(){
+
+  const subject = $('problemSubject').value;
+  const problem = $('problemText').value.trim();
+
+  if (!subject){
+    toast('Please select a problem', 'err');
+    $('problemSubject').focus();
+    return;
+  }
+
+  if (!problem){
+    toast('Please describe the problem', 'err');
+    $('problemText').focus();
+    return;
+  }
+
+  const formData = new FormData();
+
+  formData.append('access_key', 'b6d39fa0-0475-4726-a82d-e2191a7316fb');
+  formData.append('subject', 'Net Less | ' + subject);
+  formData.append('from_name', 'Net Less User');
+  formData.append('message', problem);
+
+  try {
+
+    const response = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success){
+
+      toast('Report submitted successfully', 'ok');
+
+      $('problemSubject').value = '';
+      $('problemText').value = '';
+
+    } else {
+
+      toast('Failed to submit report', 'err');
+
+    }
+
+  } catch (error) {
+
+    toast('Connection error. Try again.', 'err');
+
+  }
+}
 /* ---------- TOAST ---------- */
 function toast(msg, kind = 'info'){
   const t = document.createElement('div');
@@ -581,4 +736,5 @@ function closeScanner(){
     $('nameError').textContent = 'Enter your name to join room ' + r + '.';
   }
 })();
+window.addEventListener('beforeunload', destroyPeer);
 window.addEventListener('beforeunload', destroyPeer);

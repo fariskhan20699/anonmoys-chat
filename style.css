@@ -1099,6 +1099,103 @@ input:focus-visible {
   }
 }
 
+/*----------- Help & Support---------*/
+.help-details {
+  display: none;
+}
+
+.help-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.help-title-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(68, 216, 241, 0.12);
+  color: #9FD8E8;
+  font-size: 22px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.help-title h1 {
+  margin: 0;
+  color: #9FD8E8;
+  font-size: 22px;
+  
+}
+
+.help-instructions {
+  padding: 18px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.help-instructions p {
+  margin: 0 0 14px;
+  line-height: 1.6;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.help-textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  margin: 10px 0 14px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.2);
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.help-textarea:focus {
+  border-color: #9FD8E8;
+}
+
+.help-label {
+  display: block;
+  margin: 14px 0 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9FD8E8;
+}
+
+.help-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.help-select:focus {
+  border-color: #9FD8E8;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.12);
+}
+
+.help-select option {
+  background: #0f172a;
+  color: #fff;
+}
+
 /* ---------- MOBILE ---------- */
 @media (max-width: 600px) {
   body {

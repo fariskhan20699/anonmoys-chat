@@ -45,6 +45,51 @@
     <span><b>Help & Support</b><small>Get help or report a problem</small></span>  </button>
     <button class="back" onclick="show('s-home')">← Change name</button>
   </section>
+<!-- 3. HELP -->
+<section id="s-help" class="step">
+  <img src="./img/directchat-logo.png" alt="" class="app-logo small">
+
+  <div id="helpMenu">
+    <h1>Help & Support</h1>
+    <p class="sub">Find answers or report a problem</p>
+
+    <button class="choice" onclick="showHelp('join')">
+      <span class="choice-ico">⌗</span>
+      <span>
+        <b>How to join a room</b>
+        <small>Use a room code or scan the QR</small>
+      </span>
+    </button>
+
+    <button class="choice" onclick="showHelp('host')">
+      <span class="choice-ico">＋</span>
+      <span>
+        <b>How to host a room</b>
+        <small>Create a room and share the code</small>
+      </span>
+    </button>
+
+    <button class="choice" onclick="showHelp('connection')">
+      <span class="choice-ico">⌁</span>
+      <span>
+        <b>Connection problems</b>
+        <small>Check Wi-Fi, hotspot and host status</small>
+      </span>
+    </button>
+
+    <button class="choice" onclick="showHelp('report')">
+      <span class="choice-ico">!</span>
+      <span>
+        <b>Report a problem</b>
+        <small>Tell us what went wrong</small>
+      </span>
+    </button>
+
+    <button class="back" onclick="show('s-options')">← Back</button>
+  </div>
+
+  <div id="helpDetails" class="help-details"></div>
+</section>
 
   <!-- 3. HOST -->
   <section id="s-host" class="step">
@@ -107,7 +152,7 @@
         <div class="stack" id="avatarStack"></div>
       </div>
       <div class="head-actions">
-        <button class="mini" id="roomInfoBtn" onclick="show('s-host')" title="Room code and QR">Code</button>
+        <button class="mini" id="roomInfoBtn" onclick="show('s-host')" title="Room code and QR">Home</button>
         <button class="mini danger" onclick="leaveRoom()">Leave</button>
       </div>
     </header>
