@@ -149,8 +149,22 @@ function backToHelpMenu(){
 }
 async function submitProblem(){
 
+  const name = $('problemName');
+  const email = $('problemEmail');
   const subject = $('problemSubject').value;
   const problem = $('problemText').value.trim();
+
+  if (!name.value.trim()){
+    toast('Please enter your name', 'err');
+    name.focus();
+    return;
+  }
+
+  if (!email.value.trim()){
+    toast('Please enter your email', 'err');
+    email.focus();
+    return;
+  }
 
   if (!subject){
     toast('Please select a problem', 'err');
