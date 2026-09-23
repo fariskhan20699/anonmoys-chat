@@ -20,6 +20,261 @@ function show(id){
   const s = $(id); if (s) s.classList.add('active');
   if (id === 's-chat') setTimeout(() => $('msgInput').focus(), 150);
 }
+
+let imageZoom = 1;
+let imageRotation = 0;
+
+const instructionImages = [
+    "./img/01.png",
+    "./img/02.png",
+    "./img/03.png",
+    "./img/04.png",
+    "./img/05.png",
+    "./img/06.png",
+    "./img/07.png",
+    "./img/08.png",
+    "./img/09.png"
+];
+
+let currentImageIndex = 0;
+
+let mouseX = 50;
+let mouseY = 50;
+
+
+// =========================
+// OPEN IMAGE
+// =========================
+
+function openImage(src) {
+
+    const modal = $('imageModal');
+    const image = $('previewImage');
+
+    currentImageIndex = instructionImages.indexOf(src);
+
+    if (currentImageIndex === -1) {
+        currentImageIndex = 0;
+    }
+
+    image.src = instructionImages[currentImageIndex];
+
+    imageZoom = 1;
+    imageRotation = 0;
+
+    mouseX = 50;
+    mouseY = 50;
+
+    image.style.transformOrigin = "50% 50%";
+
+    updateImageTransform();
+
+    modal.classList.add('active');
+}
+
+
+// =========================
+// CLOSE IMAGE
+// =========================
+
+function closeImage() {
+    $('imageModal').classList.remove('active');
+}
+
+
+// =========================
+// MOUSE POSITION
+// =========================
+
+$('previewImage').addEventListener('mousemove', function(e) {
+
+    const rect = this.getBoundingClientRect();
+
+    mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+    mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+
+    this.style.transformOrigin =
+        `${mouseX}% ${mouseY}%`;
+});
+
+
+// =========================
+// ZOOM IN
+// =========================
+
+function zoomIn() {
+
+    imageZoom += 0.2;
+
+    if (imageZoom > 3) {
+        imageZoom = 3;
+    }
+
+    updateImageTransform();
+}
+
+
+// =========================
+// ZOOM OUT
+// =========================
+
+function zoomOut() {
+
+    imageZoom -= 0.2;
+
+    if (imageZoom < 0.5) {
+        imageZoom = 0.5;
+    }
+
+    updateImageTransform();
+}
+
+
+// =========================
+// RESET
+// =========================
+
+function resetZoom() {
+
+    imageZoom = 1;
+    imageRotation = 0;
+
+    mouseX = 50;
+    mouseY = 50;
+
+    $('previewImage').style.transformOrigin =
+        "50% 50%";
+
+    updateImageTransform();
+}
+
+
+// =========================
+// ROTATE
+// =========================
+
+function rotateImage() {
+
+    imageRotation += 90;
+
+    if (imageRotation >= 360) {
+        imageRotation = 0;
+    }
+
+    updateImageTransform();
+}
+
+
+// =========================
+// UPDATE IMAGE
+// =========================
+
+function updateImageTransform() {
+
+    const image = $('previewImage');
+
+    image.style.transformOrigin =
+        `${mouseX}% ${mouseY}%`;
+
+    image.style.transform =
+        `scale(${imageZoom}) rotate(${imageRotation}deg)`;
+}
+
+
+// =========================
+// NEXT IMAGE
+// =========================
+
+function nextImage() {
+
+    currentImageIndex++;
+
+    if (currentImageIndex >= instructionImages.length) {
+        currentImageIndex = 0;
+    }
+
+    const image = $('previewImage');
+
+    image.src = instructionImages[currentImageIndex];
+
+    imageZoom = 1;
+    imageRotation = 0;
+
+    mouseX = 50;
+    mouseY = 50;
+
+    image.style.transformOrigin = "50% 50%";
+
+    updateImageTransform();
+}
+
+
+// =========================
+// PREVIOUS IMAGE
+// =========================
+
+function previousImage() {
+
+    currentImageIndex--;
+
+    if (currentImageIndex < 0) {
+        currentImageIndex =
+            instructionImages.length - 1;
+    }
+
+    const image = $('previewImage');
+
+    image.src = instructionImages[currentImageIndex];
+
+    imageZoom = 1;
+    imageRotation = 0;
+
+    mouseX = 50;
+    mouseY = 50;
+
+    image.style.transformOrigin = "50% 50%";
+
+    updateImageTransform();
+}
+
+
+// =========================
+// MOUSE WHEEL ZOOM
+// =========================
+
+$('previewImage').addEventListener('wheel', function(e) {
+
+    e.preventDefault();
+
+    const rect = this.getBoundingClientRect();
+
+    mouseX =
+        ((e.clientX - rect.left) / rect.width) * 100;
+
+    mouseY =
+        ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (e.deltaY < 0) {
+
+        imageZoom += 0.2;
+
+        if (imageZoom > 3) {
+            imageZoom = 3;
+        }
+
+    } else {
+
+        imageZoom -= 0.2;
+
+        if (imageZoom < 0.5) {
+            imageZoom = 0.5;
+        }
+    }
+
+    updateImageTransform();
+
+});
+
 function showHelp(type){
   const menu = $('helpMenu');
   const details = $('helpDetails');
@@ -118,6 +373,13 @@ function showHelp(type){
         <button class="btn-main" onclick="submitProblem()">
           Send Report
         </button>
+
+        <p class="support-email">
+          Need help? Contact us at
+          <a href="mailto:netlesscodesupport@gmail.com">
+              netlesscodesupport@gmail.com
+          </a>
+        </p>
       `
     }
 

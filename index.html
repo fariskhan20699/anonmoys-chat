@@ -36,15 +36,100 @@
       <span class="choice-ico">＋</span>
       <span><b>Create a room</b><small>You get a code and a QR to share</small></span>
     </button>
+
     <button class="choice" onclick="show('s-join')">
-      <span class="choice-ico">⌗</span>
-      <span><b>Join a room</b><small>Type the code or scan the QR</small></span>
+        <span class="choice-ico">⌗</span>
+        <span>
+            <b>Join a room</b>
+            <small>Type the code or scan the QR</small>
+        </span>
     </button>
+
     <button class="choice" onclick="show('s-help')">
-    <span class="choice-ico">?</span>
-    <span><b>Help & Support</b><small>Get help or report a problem</small></span>  </button>
-    <button class="back" onclick="show('s-home')">← Change name</button>
+      <span class="choice-ico">?</span>
+      <span>
+          <b>Help & Support</b>
+          <small>Get help or report a problem</small>
+        </span>  
+    </button>
+
+    <button class="choice" onclick="show('s-instructions')">
+        <span class="choice-ico">ⓘ</span>
+        <span>
+            <b>Instructions</b>
+            <small>Learn how to use this section</small>
+        </span>
+    </button>
+
+    <button class="back" onclick="show('s-home')">
+    ← Change name
+    </button>
   </section>
+      <section id="s-instructions" class="step">
+
+    <h2>Instructions</h2>
+    <p>Click any image to view it in full size.</p>
+
+    <div class="instruction-gallery">
+
+        <div class="instruction-card">
+            <img src="./img/01.png"
+                 alt="Instruction 1"
+                 onclick="openImage(this.src)">
+        </div>
+
+        <div class="instruction-card">
+            <img src="./img/02.png"
+                 alt="Instruction 2"
+                 onclick="openImage(this.src)">
+        </div>
+
+        <div class="instruction-card">
+            <img src="./img/03.png"
+                 alt="Instruction 3"
+                 onclick="openImage(this.src)">
+        </div>
+
+        <div class="instruction-card">
+            <img src="./img/04.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+
+                <div class="instruction-card">
+            <img src="./img/05.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+
+                <div class="instruction-card">
+            <img src="./img/06.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+
+                <div class="instruction-card">
+            <img src="./img/07.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+
+                <div class="instruction-card">
+            <img src="./img/08.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+
+                <div class="instruction-card">
+            <img src="./img/09.png"
+                 alt="Instruction 4"
+                 onclick="openImage(this.src)">
+        </div>
+    </div>
+    <button class="back" onclick="show('s-options')">
+    ← Back
+    </button>
+    </section>
 <!-- 3. HELP -->
 <section id="s-help" class="step">
   <img src="./img/directchat-logo.png" alt="" class="app-logo small">
@@ -184,7 +269,23 @@
 <video autoplay muted loop playsinline id="bgVideo">
   <source src="./img/bg-video.mp4" type="video/mp4">
 </video>
+<div id="imageModal" class="image-modal">
 
+    <button class="close-image" onclick="closeImage()">×</button>
+
+    <button class="image-nav prev-image" onclick="previousImage()">❮</button>
+    <button class="image-nav next-image" onclick="nextImage()">❯</button>
+
+    <div class="zoom-controls">
+        <button onclick="zoomIn()">+</button>
+        <button onclick="zoomOut()">−</button>
+        <button onclick="resetZoom()">↺</button>
+        <button onclick="rotateImage()">⟳</button>
+    </div>
+
+    <img id="previewImage" src="" alt="Instruction preview">
+
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>

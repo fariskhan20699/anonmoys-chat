@@ -1210,9 +1210,7 @@ input:focus-visible {
   color: #fff;
 }
 
-/* =========================
-   TEXTAREA
-========================= */
+/* ---------- TEXTAREA ---------------*/
 
 .help-textarea {
   width: 100%;
@@ -1237,10 +1235,6 @@ input:focus-visible {
     box-shadow 0.2s ease;
 }
 
-/* =========================
-   STRONG GLOW ON CLICK
-========================= */
-
 .help-input:focus,
 .help-select:focus,
 .help-textarea:focus {
@@ -1258,13 +1252,180 @@ input:focus-visible {
   transition: all 0.2s ease;
 }
 
-/* =========================
-   PLACEHOLDER
-========================= */
+/*-------- PLACEHOLDER ---------- */
 
 .help-input:focus::placeholder,
 .help-textarea:focus::placeholder {
   color: rgba(255,255,255,0.55);
+}
+/*--------- NEED HELP ------------*/
+.support-email {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #777;
+}
+
+.support-email a {
+    color: #22d3ee;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.support-email a:hover {
+    text-decoration: underline;
+}
+
+/*---------- INSTRUCTION --------------------*/
+.instruction-gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-top: 25px;
+}
+
+.instruction-card {
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.instruction-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.instruction-card:hover img {
+    transform: scale(1.04);
+}
+
+
+/* Image Popup */
+
+.image-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-modal.active {
+    display: flex;
+}
+
+.image-modal img {
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+    transform: scale(1);
+    transition: transform 0.2s ease;
+    user-select: none;
+}
+
+
+/* Close button */
+
+.close-image {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.close-image:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+
+/* Zoom buttons */
+
+.zoom-controls {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 2;
+}
+
+.zoom-controls button {
+    top: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.zoom-controls button:hover {
+    transform: scale(1.05);
+}
+
+.image-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 50px;
+    height: 50px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+
+    font-size: 22px;
+    cursor: pointer;
+
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-nav:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.prev-image {
+    left: 25px;
+}
+
+.next-image {
+    right: 25px;
 }
 
 /* ---------- MOBILE ---------- */
