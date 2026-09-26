@@ -502,6 +502,9 @@ function renderMembers() {
 
   const c = members.size;
   $('memberCount').textContent = c;
+
+  const pb = $('peopleBadge');
+  if (pb) pb.textContent = c;
   $('waiting').style.display = isHost && c === 1 ? 'flex' : 'none';
 
   if (c > 5) {
@@ -922,7 +925,7 @@ function joinRoom() {
         members.set(myId, myName);
 
         $('roomChip').textContent = roomCode;
-        $('roomInfoBtn').style.display = 'none';
+        $('roomInfoBtn').style.display = '';
         $('chatBox').innerHTML = '';
 
         sysMsg('Connected to room ' + roomCode);
@@ -1542,6 +1545,92 @@ function closeScanner() {
   scanStream = null;
   $('scanner').classList.remove('open');
 }
+
+/* =========================================================
+   CHAT HEADER (back / copy / members panel)
+   ========================================================= */
+
+function backFromChat() {
+  if (isHost) {
+    show('s-host');
+  } else {
+    leaveRoom();
+  }
+}
+
+function toggleMembersPanel() {
+  const p = $('chatMembersPanel');
+  if (!p) return;
+
+  const open = p.classList.toggle('open');
+  if (open) renderChatMembers();
+}
+
+function renderChatMembers() {
+  const p = $('chatMembersPanel');
+  if (!p) return;
+
+  p.innerHTML = '';
+
+  [...members].forEach(([id, name]) => {
+    const row = document.createElement('div');
+    row.className = 'cm-row';
+    row.appendChild(avatar(name));
+
+    const s = document.createElement('span');
+    s.textContent = name + (id === myId ? ' (You)' : '');
+    row.appendChild(s);
+
+    p.appendChild(row);
+  });
+}
+
+/* ---------- ROOM INFO / GUEST QR ---------- */
+
+function showRoomInfo() {
+  if (isHost) {
+    show('s-host');
+    return;
+  }
+
+  /* Guest: show scan-to-join QR for this room */
+  const box = $('guestQr');
+  box.innerHTML = '';
+
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(box, {
+      text: roomLink(),
+      width: 168,
+      height: 168,
+      colorDark: '#06222b',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  const b = $('guestCodeBoard');
+  b.innerHTML = '';
+  [...roomCode].forEach(ch => {
+    const s = document.createElement('span');
+    s.className = 'ch';
+    s.textContent = ch;
+    b.appendChild(s);
+  });
+
+  $('guestQrModal').classList.add('active');
+}
+
+function closeGuestQr() {
+  $('guestQrModal').classList.remove('active');
+}
+
+/* close members panel when clicking outside */
+document.addEventListener('click', e => {
+  const p = $('chatMembersPanel');
+  if (!p || !p.classList.contains('open')) return;
+  if (p.contains(e.target) || e.target.closest('#peopleBtn')) return;
+  p.classList.remove('open');
+});
 
 /* =========================================================
    INIT

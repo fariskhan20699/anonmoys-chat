@@ -1601,3 +1601,185 @@ input:focus-visible {
     opacity: 1;
   }
 }
+
+/* ---------- CHAT HEADER (screenshot style) ---------- */
+.chat-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chat-back {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid var(--line);
+  font-size: 18px;
+}
+
+.chat-back:hover { background: rgba(255, 255, 255, .18); }
+
+.id-pill {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 7px 12px;
+}
+
+.pill-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+}
+
+.pill-code {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pill-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--soft);
+  flex: none;
+}
+
+.pill-code b {
+  font: 700 16px Consolas, 'Courier New', monospace;
+  letter-spacing: 2px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill-copy {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 15px;
+}
+
+.pill-copy:hover { background: rgba(255, 255, 255, .12); }
+
+.head-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid var(--line);
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+}
+
+.head-btn:hover { background: rgba(255, 255, 255, .18); }
+
+.people-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--cyan);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.chat-members-panel {
+  display: none;
+  position: absolute;
+  top: 54px;
+  right: 0;
+  width: 210px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: rgba(8, 26, 33, .97);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
+  z-index: 30;
+}
+
+.chat-members-panel.open { display: block; animation: fade .2s ease; }
+
+.cm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.cm-row:hover { background: rgba(255, 255, 255, .08); }
+
+/* ---------- code without border ---------- */
+.id-pill .chip {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* ---------- GUEST QR MODAL ---------- */
+.guest-qr-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(2, 9, 12, .8);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.guest-qr-modal.active {
+  display: flex;
+  animation: fade .25s ease;
+}
+
+.guest-qr-card {
+  width: 100%;
+  max-width: 340px;
+  background: rgba(15, 40, 50, .95);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+}
+
+/* QR icon inside head button */
+.head-btn svg {
+  display: block;
+}

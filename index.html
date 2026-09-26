@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -236,14 +237,33 @@
   <!-- 5. CHAT -->
   <section id="s-chat" class="step">
     <header class="chat-head">
-      <div class="chat-title">
-        <h2>Room <span id="roomChip" class="chip"></span></h2>
-        <div class="stack" id="avatarStack"></div>
+      <button class="chat-back" onclick="backFromChat()" title="Back">&#8592;</button>
+
+      <div class="id-pill">
+        <span class="pill-dot"></span>
+        <div class="pill-code">
+          <span class="pill-label">Room ID :</span>
+          <b id="roomChip" class="chip"></b>
+        </div>
+        <button class="pill-copy" onclick="copyCode()" title="Copy code">&#10697;</button>
       </div>
-      <div class="head-actions">
-        <button class="mini" id="roomInfoBtn" onclick="show('s-host')" title="Room code and QR">Home</button>
-        <button class="mini danger" onclick="leaveRoom()">Leave</button>
-      </div>
+
+      <button class="head-btn" id="roomInfoBtn" onclick="showRoomInfo()" title="Room code &amp; QR" aria-label="Room code and QR">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M3 3h8v8H3V3zm2 2v4h4V5H5z"/>
+          <path fill-rule="evenodd" d="M13 3h8v8h-8V3zm2 2v4h4V5h-4z"/>
+          <path fill-rule="evenodd" d="M3 13h8v8H3v-8zm2 2v4h4v-4H5z"/>
+          <path d="M13 13h2.4v2.4H13zM16.8 13H19v2.4h-2.2zM13 16.8h2.4v2.4H13zM19 16.8h2v2.2h-2zM16.8 19h2.2v2h-2.2zM13 21h2.4v-1H13zM19 13h2v2h-2z"/>
+        </svg>
+      </button>
+
+      <button class="head-btn people" id="peopleBtn" onclick="toggleMembersPanel()" title="Members">
+        &#128101;
+        <span class="people-badge" id="peopleBadge">1</span>
+      </button>
+
+      <div class="stack" id="avatarStack" style="display:none"></div>
+      <div id="chatMembersPanel" class="chat-members-panel"></div>
     </header>
 
     <div id="chatBox" role="log"></div>
@@ -322,6 +342,19 @@
 
     <img id="previewImage" src="" alt="Instruction preview">
 
+</div>
+
+<!-- GUEST QR (scan to join) -->
+<div id="guestQrModal" class="guest-qr-modal">
+  <div class="guest-qr-card">
+    <h2>Scan to join</h2>
+    <p class="sub">Others on this Wi-Fi can scan this with their phone camera.</p>
+    <div class="qr-frame"><div id="guestQr"></div></div>
+    <div class="code-board" id="guestCodeBoard" style="margin:16px 0 6px"></div>
+      <button class="btn-ghost" onclick="copyCode()">Copy code</button>
+    <button class="btn-ghost" onclick="copyLink()">Copy Join link</button>
+    <button class="btn-main" onclick="closeGuestQr()">Done</button>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
