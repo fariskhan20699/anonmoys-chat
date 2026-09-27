@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Netless Code  Coming Soon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div class="page">
+  <div class="streak streak-a"></div>
+  <div class="streak streak-b"></div>
+
+  <nav class="navbar">
+    <div class="logo">Netless<span>Chat</span></div>
+    <div class="status"><span class="status-dot"></span>Building Something New</div>
+  </nav>
+
+  <main class="hero">
+    <div class="hero-content">
+      <div class="tag">&lt; Coming soon &gt;</div>
+      <h1>Something <span class="accent">Great</span><br>Is Coming.</h1>
+      <p class="description">Netless Code is building something new for developers, learners and creators. We're putting the final pieces together.</p>
+
+      <div class="countdown" id="countdown">
+        <div class="time-box">
+          <div class="flip-group"><div class="digit" id="days-t"></div><div class="digit" id="days-u"></div></div>
+          <span class="label">DAYS</span>
+        </div>
+        <div class="time-sep"><i></i><i></i></div>
+        <div class="time-box">
+          <div class="flip-group"><div class="digit" id="hours-t"></div><div class="digit" id="hours-u"></div></div>
+          <span class="label">HOURS</span>
+        </div>
+        <div class="time-sep"><i></i><i></i></div>
+        <div class="time-box">
+          <div class="flip-group"><div class="digit" id="min-t"></div><div class="digit" id="min-u"></div></div>
+          <span class="label">MINUTES</span>
+        </div>
+        <div class="time-sep"><i></i><i></i></div>
+        <div class="time-box">
+          <div class="flip-group"><div class="digit" id="sec-t"></div><div class="digit" id="sec-u"></div></div>
+          <span class="label">SECONDS</span>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-info"><span>Launch progress</span><span class="progress-pct" id="progressPct">0%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-date" id="progressDate"></div>
+      </div>
+
+      <div class="launched" id="launched"><span class="rocket">🚀</span> We're Live!</div>
+
+      <div class="notify">
+        <input type="email" id="email" placeholder="Enter your email">
+        <button id="notifyBtn">Notify Me</button>
+      </div>
+      <p class="notify-msg" id="notifyMsg"></p>
+    </div>
+  </main>
+
+  <footer><span class="code">&lt;/&gt;</span> Built by Netless Cohat · &copy; 2026</footer>
+  <script src="script.js"></script>
+</div>
+</body>
+</html>
