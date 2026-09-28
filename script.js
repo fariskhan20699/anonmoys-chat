@@ -3,7 +3,7 @@
   'use strict';
 
   // Single source of truth for the launch date — used by countdown, progress and footer.
-  var LAUNCH_DATE = new Date('October 1, 2026 00:00:00').getTime();
+  var LAUNCH_DATE = new Date('October 10, 2026 00:00:00').getTime();
   var START_DATE  = new Date('June 1, 2026 00:00:00').getTime();
 
   var $ = function(id){ return document.getElementById(id); };
